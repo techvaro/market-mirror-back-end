@@ -1,0 +1,1464 @@
+{
+  "info": {
+    "name": "Market Mirror API",
+    "_postman_id": "market-mirror-api-docs",
+    "description": "Market Mirror Backend API — JWT Auth, Admin, Mapper, Vendor, Buyer endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8001/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"phone\": \"+2348012345678\",\n  \"role\": \"buyer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login — Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cdavis@admin.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as admin. Copy the token from response and set it as the collection variable `token`."
+          },
+        },
+        {
+          "name": "Login — Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bob.smith@shop.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login — Buyer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login — Mapper",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"amaka.obi@marketmirror.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile (me)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Charlie Davis Updated\",\n  \"phone\": \"+2348099999999\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Dashboard",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/users?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+2348000000000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete (Suspend) User",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/admin/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "1", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Mappers",
+      "item": [
+        {
+          "name": "List Mappers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/mappers?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "mappers"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "region",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Mapper by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/mappers/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "mappers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Mapper",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Mapper\",\n  \"email\": \"newmapper@marketmirror.com\",\n  \"phone\": \"+2348011111111\",\n  \"employee_id\": \"MP-999\",\n  \"assigned_market\": \"Balogun Market\",\n  \"assigned_region\": \"Lagos Island\",\n  \"supervisor\": \"Amaka Obi\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/mappers",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "mappers"]
+            }
+          }
+        },
+        {
+          "name": "Update Mapper",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assigned_region\": \"Lagos Mainland\",\n  \"mapper_status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/mappers/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "mappers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete (Suspend) Mapper",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/admin/mappers/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "mappers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Assign Task to Mapper",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mapper_id\": 1,\n  \"title\": \"Map new vendors in Balogun\",\n  \"type\": \"vendor_registration\",\n  \"market\": \"Balogun Market\",\n  \"priority\": \"high\",\n  \"due_date\": \"2026-08-15\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/mappers/assign-task",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "mappers", "assign-task"]
+            }
+          }
+        },
+        {
+          "name": "Mappers Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/mappers-dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "mappers-dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Verification Queue",
+      "item": [
+        {
+          "name": "List Verification Queue",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/verification-queue?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "verification-queue"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Verification Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"notes\": \"Verified on-site\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/verification-queue/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "verification-queue", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mapper — Dashboard",
+      "item": [
+        {
+          "name": "Mapper Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/mapper/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["mapper", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mapper — Tasks",
+      "item": [
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/tasks?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "priority",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Task by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/tasks/1",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mapper_id\": 1,\n  \"title\": \"Verify new shop on Broad Street\",\n  \"description\": \"Check shop documents and take photos\",\n  \"type\": \"verification_visit\",\n  \"market\": \"Balogun Market\",\n  \"priority\": \"medium\",\n  \"due_date\": \"2026-08-20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Update Task Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks/1",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mapper — Shop Locations",
+      "item": [
+        {
+          "name": "List Shop Locations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/shop-locations?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["shop-locations"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "market",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Shop Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_name\": \"Adunni Fabrics\",\n  \"market\": \"Balogun Market\",\n  \"street\": \"Balogun Street\",\n  \"shop_block\": \"Block C\",\n  \"latitude\": 6.4541,\n  \"longitude\": 3.3947,\n  \"accuracy\": \"high\",\n  \"mapper_name\": \"Amaka Obi\",\n  \"photos\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/shop-locations",
+              "host": ["{{base_url}}"],
+              "path": ["shop-locations"]
+            }
+          }
+        },
+        {
+          "name": "Update Shop Location Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/shop-locations/1",
+              "host": ["{{base_url}}"],
+              "path": ["shop-locations", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mapper — Vendor Registrations",
+      "item": [
+        {
+          "name": "List Vendor Registrations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/vendor-registrations?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["vendor-registrations"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Vendor Registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_name\": \"Chidi Electronics\",\n  \"business_category\": \"Electronics\",\n  \"market\": \"Balogun Market\",\n  \"photos\": [],\n  \"latitude\": 6.4550,\n  \"longitude\": 3.3960\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vendor-registrations",
+              "host": ["{{base_url}}"],
+              "path": ["vendor-registrations"]
+            }
+          }
+        },
+        {
+          "name": "Update Vendor Registration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approval_status\": \"approved\",\n  \"notes\": \"All documents verified\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vendor-registrations/1",
+              "host": ["{{base_url}}"],
+              "path": ["vendor-registrations", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shops",
+      "item": [
+        {
+          "name": "List Shops (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/shops?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["shops"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "market",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "city",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Shop by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/shops/1",
+              "host": ["{{base_url}}"],
+              "path": ["shops", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Shop Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/shops/1/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["shops", "1", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "Create Shop (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Shop\",\n  \"category\": \"Fashion\",\n  \"description\": \"Clothing and accessories\",\n  \"location\": \"12 Broad Street\",\n  \"market\": \"Balogun Market\",\n  \"city\": \"Lagos\",\n  \"phone\": \"+2348012345678\",\n  \"shop_number\": \"SHOP-001\",\n  \"hours\": \"9am - 6pm\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/shops",
+              "host": ["{{base_url}}"],
+              "path": ["shops"]
+            }
+          }
+        },
+        {
+          "name": "Update Shop (Auth)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Shop Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/shops/1",
+              "host": ["{{base_url}}"],
+              "path": ["shops", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Shop (Auth)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/shops/1",
+              "host": ["{{base_url}}"],
+              "path": ["shops", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "shop_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "min_price",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "max_price",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "in_stock",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["products", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Product (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shop_id\": 1,\n  \"name\": \"Ankara Fabric\",\n  \"description\": \"Quality African print fabric\",\n  \"category\": \"Fabric\",\n  \"price\": 5000,\n  \"stock\": true,\n  \"color\": \"Multi-color\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": ["{{base_url}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "Update Product (Auth)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 4500,\n  \"stock\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["products", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product (Auth)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["products", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "List Orders (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/orders?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/orders/1",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Order (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shop_id\": 1,\n  \"delivery_method\": \"delivery\",\n  \"address_first_name\": \"Alice\",\n  \"address_last_name\": \"Johnson\",\n  \"address_phone\": \"+2348012345678\",\n  \"address_street\": \"15 Marina Road\",\n  \"address_state\": \"Lagos\",\n  \"address_city\": \"Lagos Island\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"name\": \"Ankara Fabric\",\n      \"price\": 5000,\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "Update Order Status (Auth)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"packing\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/1",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "List Reviews (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/reviews?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "shop_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Review (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shop_id\": 1,\n  \"rating\": 5,\n  \"text\": \"Excellent service and quality products!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"]
+            }
+          }
+        },
+        {
+          "name": "Delete Review (Auth)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/reviews/1",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "item": [
+        {
+          "name": "Search All",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/search?q=market",
+              "host": ["{{base_url}}"],
+              "path": ["search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "market"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/notifications?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read (Auth)",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{base_url}}/notifications/1",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "List Conversations (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/messages?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["messages"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Conversation (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/messages/1",
+              "host": ["{{base_url}}"],
+              "path": ["messages", "1"]
+            }
+          }
+        },
+        {
+          "name": "Send Message (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversation_id\": 1,\n  \"text\": \"Hello, is this item still available?\",\n  \"image_url\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["messages"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Disputes",
+      "item": [
+        {
+          "name": "List Disputes (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/disputes?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["disputes"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "File Dispute (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"reason\": \"Wrong item delivered\",\n  \"description\": \"I received a different product than what I ordered.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/disputes",
+              "host": ["{{base_url}}"],
+              "path": ["disputes"]
+            }
+          }
+        },
+        {
+          "name": "Update Dispute Status (Auth)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Resolved\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/disputes/1",
+              "host": ["{{base_url}}"],
+              "path": ["disputes", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "List Payments (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/payments?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["payments"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record Payment (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"amount\": 11500,\n  \"currency\": \"NGN\",\n  \"method\": \"paystack\",\n  \"reference\": \"PAY-REF-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": ["{{base_url}}"],
+              "path": ["payments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vendor Applications",
+      "item": [
+        {
+          "name": "List Applications (Auth)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/vendor-applications?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["vendor-applications"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Application (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shop_name\": \"Ngozi Hair Salon\",\n  \"owner_name\": \"Ngozi Umeh\",\n  \"phone\": \"+2348033333333\",\n  \"category\": \"Beauty & Wellness\",\n  \"market\": \"Balogun Market\",\n  \"description\": \"Professional hair styling and beauty services\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vendor-applications",
+              "host": ["{{base_url}}"],
+              "path": ["vendor-applications"]
+            }
+          }
+        },
+        {
+          "name": "Update Application Status (Auth)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Approved\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vendor-applications/1",
+              "host": ["{{base_url}}"],
+              "path": ["vendor-applications", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public — Markets",
+      "item": [
+        {
+          "name": "List Markets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/markets?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["markets"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Market by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/markets/1",
+              "host": ["{{base_url}}"],
+              "path": ["markets", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public — Categories",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public — Buildings",
+      "item": [
+        {
+          "name": "List Buildings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/buildings",
+              "host": ["{{base_url}}"],
+              "path": ["buildings"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
