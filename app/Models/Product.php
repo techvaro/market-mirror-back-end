@@ -6,10 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Product extends Model
 {
     use HasFactory;
+
+    /**
+     * Scope products to a market by joining through their shop.
+     */
+    public function scopeForMarket(Builder $query, ?int $marketId): Builder
+    {
+        return $marketId === null
+            ? $query
+            : $query->whereHas('shop', fn (Builder $q) => $q->where('market_id', $marketId));
+    }
 
     protected $fillable = [
         'shop_id',
@@ -20,6 +31,7 @@ class Product extends Model
         'stock',
         'rating',
         'color',
+        'image_url',
     ];
 
     protected function casts(): array

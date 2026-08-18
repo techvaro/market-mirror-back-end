@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\BuildingResource;
 use App\Services\BuildingService;
-use Illuminate\Http\Request;
 
 class BuildingController extends Controller
 {
@@ -16,7 +16,7 @@ class BuildingController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->buildingService->list(),
+            'data' => BuildingResource::collection($this->buildingService->list()),
         ]);
     }
 }

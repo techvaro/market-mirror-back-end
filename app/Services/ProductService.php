@@ -3,12 +3,18 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Support\MarketContext;
 
 class ProductService
 {
+    public function __construct(
+        private readonly MarketContext $marketContext
+    ) {}
+
     public function list(array $filters, int $perPage = 15)
     {
-        $query = Product::with(['shop', 'variants']);
+        $query = Product::with(['shop', 'variants'])
+            ->forMarket($this->marketContext->get());
 
         if (isset($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
@@ -33,10 +39,29 @@ class ProductService
             $query->where('stock', true);
         }
 
-        return $query->latest()->paginate($perPage);
+        $sort = $filters['sort'] ?? 'latest';
+        match ($sort) {
+            'price_asc' => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'rating' => $query->orderByDesc('rating'),
+            default => $query->latest(),
+        };
+
+        return $query->paginate($perPage);
     }
 
     public function find(int $id): Product
+    {
+        return Product::with(['shop', 'variants'])
+            ->forMarket($this->marketContext->get())
+            ->findOrFail($id);
+    }
+
+    /**
+     * Unscoped lookup used by vendors/admins for ownership-scoped mutations
+     * (update/delete) regardless of the active buyer market context.
+     */
+    public function findForOwner(int $id): Product
     {
         return Product::with(['shop', 'variants'])->findOrFail($id);
     }
@@ -49,14 +74,14 @@ class ProductService
             $product->shop->increment('product_count');
         }
 
-        return $product;
+        return $product->load(['shop', 'variants']);
     }
 
     public function update(int $id, array $data): Product
     {
         $product = Product::findOrFail($id);
         $product->update($data);
-        return $product;
+        return $product->load(['shop', 'variants']);
     }
 
     public function delete(int $id): void

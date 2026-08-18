@@ -9,7 +9,7 @@ class ReviewService
 {
     public function list(array $filters, int $perPage = 15)
     {
-        $query = Review::with(['shop', 'user']);
+        $query = Review::with(['shop', 'user', 'reviewImages']);
 
         if (isset($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
@@ -28,7 +28,12 @@ class ReviewService
 
         $this->recalculateShopRating($data['shop_id']);
 
-        return $review;
+        return $review->load('shop', 'user');
+    }
+
+    public function find(int $id): Review
+    {
+        return Review::with(['shop', 'user', 'reviewImages'])->findOrFail($id);
     }
 
     public function reply(int $id, string $reply): Review

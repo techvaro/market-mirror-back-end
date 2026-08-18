@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateVerificationQueueRequest;
+use App\Http\Resources\VerificationQueueResource;
 use App\Services\VerificationQueueService;
 use Illuminate\Http\Request;
 
@@ -14,25 +16,21 @@ class VerificationQueueController extends Controller
 
     public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->verificationService->list(
-                $request->only(['status']),
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $items = $this->verificationService->list(
+            $request->only(['status']),
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(VerificationQueueResource::collection($items), $items);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateVerificationQueueRequest $request, $id)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected,revision_requested',
-            'notes' => 'nullable|string',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->verificationService->update($id, $validated),
+            'data' => new VerificationQueueResource(
+                $this->verificationService->update($id, $request->sanitized())
+            ),
             'message' => 'Verification updated',
         ]);
     }

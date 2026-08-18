@@ -3,6 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreCouponRequest;
+use App\Http\Requests\Api\StoreFlashSaleRequest;
+use App\Http\Requests\Api\UpdateCouponRequest;
+use App\Http\Requests\Api\UpdateFlashSaleRequest;
+use App\Http\Resources\CouponResource;
+use App\Http\Resources\FlashSaleResource;
 use App\Services\MarketingService;
 use Illuminate\Http\Request;
 
@@ -15,50 +21,30 @@ class MarketingController extends Controller
     // ─── Coupons ──────────────────────────────────────────────────
     public function coupons(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->marketingService->listCoupons(
-                $request->user()->id,
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $coupons = $this->marketingService->listCoupons(
+            $request->user()->id,
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(CouponResource::collection($coupons), $coupons);
     }
 
-    public function storeCoupon(Request $request)
+    public function storeCoupon(StoreCouponRequest $request)
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:255|unique:coupons,code',
-            'title' => 'nullable|string',
-            'description' => 'nullable|string',
-            'discount_type' => 'required|in:percentage,fixed',
-            'discount_value' => 'required|numeric|min:0',
-            'valid_until' => 'required|date',
-            'usage_limit' => 'nullable|integer|min:1',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->marketingService->createCoupon($validated, $request->user()->id),
+            'data' => new CouponResource(
+                $this->marketingService->createCoupon($request->sanitized(), $request->user()->id)
+            ),
             'message' => 'Coupon created',
         ], 201);
     }
 
-    public function updateCoupon(Request $request, $id)
+    public function updateCoupon(UpdateCouponRequest $request, $id)
     {
-        $validated = $request->validate([
-            'code' => 'sometimes|string|max:255|unique:coupons,code,' . $id,
-            'title' => 'nullable|string',
-            'description' => 'nullable|string',
-            'discount_type' => 'sometimes|in:percentage,fixed',
-            'discount_value' => 'sometimes|numeric|min:0',
-            'valid_until' => 'sometimes|date',
-            'usage_limit' => 'nullable|integer|min:1',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->marketingService->updateCoupon($id, $validated),
+            'data' => new CouponResource($this->marketingService->updateCoupon($id, $request->sanitized())),
             'message' => 'Coupon updated',
         ]);
     }
@@ -76,50 +62,30 @@ class MarketingController extends Controller
     // ─── Flash Sales ──────────────────────────────────────────────
     public function flashSales(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->marketingService->listFlashSales(
-                $request->user()->id,
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $sales = $this->marketingService->listFlashSales(
+            $request->user()->id,
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(FlashSaleResource::collection($sales), $sales);
     }
 
-    public function storeFlashSale(Request $request)
+    public function storeFlashSale(StoreFlashSaleRequest $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'nullable|exists:products,id',
-            'name' => 'nullable|string',
-            'original_price' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
-            'stock_count' => 'nullable|integer|min:1',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->marketingService->createFlashSale($validated, $request->user()->id),
+            'data' => new FlashSaleResource(
+                $this->marketingService->createFlashSale($request->sanitized(), $request->user()->id)
+            ),
             'message' => 'Flash sale created',
         ], 201);
     }
 
-    public function updateFlashSale(Request $request, $id)
+    public function updateFlashSale(UpdateFlashSaleRequest $request, $id)
     {
-        $validated = $request->validate([
-            'product_id' => 'nullable|exists:products,id',
-            'name' => 'nullable|string',
-            'original_price' => 'sometimes|numeric|min:0',
-            'sale_price' => 'sometimes|numeric|min:0',
-            'start_time' => 'sometimes|date',
-            'end_time' => 'sometimes|date|after:start_time',
-            'stock_count' => 'nullable|integer|min:1',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->marketingService->updateFlashSale($id, $validated),
+            'data' => new FlashSaleResource($this->marketingService->updateFlashSale($id, $request->sanitized())),
             'message' => 'Flash sale updated',
         ]);
     }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StorePaymentRequest;
+use App\Http\Resources\PaymentResource;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 
@@ -14,30 +16,23 @@ class PaymentController extends Controller
 
     public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->paymentService->list(
-                [],
-                $request->user()->role,
-                $request->user()->id,
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $payments = $this->paymentService->list(
+            [],
+            $request->user()->role,
+            $request->user()->id,
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(PaymentResource::collection($payments), $payments);
     }
 
-    public function store(Request $request)
+    public function store(StorePaymentRequest $request)
     {
-        $validated = $request->validate([
-            'order_id' => 'nullable|exists:orders,id',
-            'amount' => 'required|numeric|min:0',
-            'currency' => 'nullable|string',
-            'method' => 'required|string',
-            'reference' => 'nullable|string',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->paymentService->create($validated, $request->user()->id),
+            'data' => new PaymentResource(
+                $this->paymentService->create($request->sanitized(), $request->user()->id)
+            ),
             'message' => 'Payment recorded',
         ], 201);
     }

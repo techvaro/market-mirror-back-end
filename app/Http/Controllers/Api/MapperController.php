@@ -3,6 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\AssignTaskRequest;
+use App\Http\Requests\Api\CreateMapperRequest;
+use App\Http\Requests\Api\UpdateMapperRequest;
+use App\Http\Resources\MapperResource;
+use App\Http\Resources\TaskResource;
 use App\Services\MapperService;
 use Illuminate\Http\Request;
 
@@ -14,56 +19,36 @@ class MapperController extends Controller
 
     public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->mapperService->list(
-                $request->only(['status', 'region', 'search']),
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $mappers = $this->mapperService->list(
+            $request->only(['status', 'region', 'search']),
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(MapperResource::collection($mappers), $mappers);
     }
 
     public function show($id)
     {
         return response()->json([
             'success' => true,
-            'data' => $this->mapperService->find($id),
+            'data' => new MapperResource($this->mapperService->find($id)),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(CreateMapperRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string',
-            'employee_id' => 'required|string|unique:mappers,employee_id',
-            'assigned_market' => 'required|string',
-            'assigned_region' => 'required|string',
-            'supervisor' => 'nullable|string',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->mapperService->create($validated),
+            'data' => new MapperResource($this->mapperService->create($request->sanitized())),
             'message' => 'Mapper created',
         ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateMapperRequest $request, $id)
     {
-        $validated = $request->validate([
-            'assigned_market' => 'sometimes|string',
-            'assigned_region' => 'sometimes|string',
-            'mapper_status' => 'sometimes|in:active,inactive,suspended',
-            'supervisor' => 'sometimes|nullable|string',
-            'notes' => 'sometimes|nullable|string',
-            'name' => 'sometimes|string|max:255',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->mapperService->update($id, $validated),
+            'data' => new MapperResource($this->mapperService->update($id, $request->sanitized())),
             'message' => 'Mapper updated',
         ]);
     }
@@ -86,20 +71,11 @@ class MapperController extends Controller
         ]);
     }
 
-    public function assignTask(Request $request)
+    public function assignTask(AssignTaskRequest $request)
     {
-        $validated = $request->validate([
-            'mapper_id' => 'required|exists:mappers,id',
-            'title' => 'required|string',
-            'type' => 'required|in:vendor_registration,shop_mapping,re_mapping,verification_visit',
-            'market' => 'required|string',
-            'priority' => 'required|in:low,medium,high,urgent',
-            'due_date' => 'required|date',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->mapperService->assignTask($validated),
+            'data' => new TaskResource($this->mapperService->assignTask($request->sanitized())),
             'message' => 'Task assigned',
         ], 201);
     }

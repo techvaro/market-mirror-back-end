@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Market extends Model
 {
@@ -13,6 +14,8 @@ class Market extends Model
         'name',
         'description',
         'location',
+        'latitude',
+        'longitude',
         'city',
         'state',
         'shop_count',
@@ -24,6 +27,18 @@ class Market extends Model
     {
         return [
             'shop_count' => 'integer',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
         ];
+    }
+
+    public function shops(): HasMany
+    {
+        return $this->hasMany(Shop::class);
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasManyThrough(Product::class, Shop::class);
     }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Market;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-
 class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable;
@@ -25,6 +25,10 @@ class User extends Authenticatable implements JWTSubject
         'avatar_url',
         'employee_id',
         'region',
+        'active_market_id',
+        'bank_name',
+        'bank_account_name',
+        'bank_account_number',
     ];
 
     protected $hidden = [
@@ -76,6 +80,11 @@ class User extends Authenticatable implements JWTSubject
     public function mapperProfile(): HasOne
     {
         return $this->hasOne(Mapper::class);
+    }
+
+    public function activeMarket()
+    {
+        return $this->belongsTo(Market::class, 'active_market_id');
     }
 
     public function disputes(): HasMany

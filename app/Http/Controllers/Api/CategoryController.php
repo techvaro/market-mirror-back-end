@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CategoryResource;
 use App\Services\CategoryService;
 
 class CategoryController extends Controller
@@ -15,7 +16,7 @@ class CategoryController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->categoryService->list(),
+            'data' => CategoryResource::collection($this->categoryService->list()),
         ]);
     }
 }

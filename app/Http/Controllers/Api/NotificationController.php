@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateNotificationRequest;
+use App\Http\Resources\NotificationResource;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
@@ -14,20 +16,21 @@ class NotificationController extends Controller
 
     public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->notificationService->list(
-                $request->user()->id,
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $notifications = $this->notificationService->list(
+            $request->user()->id,
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(NotificationResource::collection($notifications), $notifications);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateNotificationRequest $request, $id)
     {
         return response()->json([
             'success' => true,
-            'data' => $this->notificationService->markRead($id, $request->user()->id),
+            'data' => new NotificationResource(
+                $this->notificationService->markRead($id, $request->user()->id)
+            ),
         ]);
     }
 }

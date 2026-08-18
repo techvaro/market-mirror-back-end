@@ -27,7 +27,12 @@ class DisputeService
             ...$data,
             'user_id' => $userId,
             'status' => 'Under Review',
-        ]);
+        ])->load('order', 'user');
+    }
+
+    public function find(int $id): Dispute
+    {
+        return Dispute::with(['user', 'order'])->findOrFail($id);
     }
 
     public function update(int $id, array $data): Dispute

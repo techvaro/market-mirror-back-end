@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreVendorApplicationRequest;
+use App\Http\Requests\Api\UpdateVendorApplicationRequest;
+use App\Http\Resources\VendorApplicationResource;
 use App\Services\VendorApplicationService;
 use Illuminate\Http\Request;
 
@@ -14,42 +17,32 @@ class VendorApplicationController extends Controller
 
     public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->vendorAppService->list(
-                $request->only(['status']),
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $applications = $this->vendorAppService->list(
+            $request->only(['status']),
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(VendorApplicationResource::collection($applications), $applications);
     }
 
-    public function store(Request $request)
+    public function store(StoreVendorApplicationRequest $request)
     {
-        $validated = $request->validate([
-            'shop_name' => 'required|string|max:255',
-            'owner_name' => 'required|string|max:255',
-            'phone' => 'required|string',
-            'category' => 'required|string',
-            'market' => 'required|string',
-            'description' => 'required|string',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->vendorAppService->create($validated, $request->user()->id),
+            'data' => new VendorApplicationResource(
+                $this->vendorAppService->create($request->sanitized(), $request->user()->id)
+            ),
             'message' => 'Application submitted',
         ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateVendorApplicationRequest $request, $id)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:Pending Review,Approved,Rejected',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->vendorAppService->update($id, $validated),
+            'data' => new VendorApplicationResource(
+                $this->vendorAppService->update($id, $request->sanitized())
+            ),
             'message' => 'Application status updated',
         ]);
     }

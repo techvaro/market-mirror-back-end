@@ -23,12 +23,19 @@ use App\Services\ShopLocationService;
 use App\Services\BuildingService;
 use App\Services\CategoryService;
 use App\Services\MarketService;
+use App\Support\MarketContext;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(MarketContext::class, fn () => new MarketContext());
+
         $this->app->singleton(AuthService::class);
         $this->app->singleton(UserService::class);
         $this->app->singleton(MapperService::class);
@@ -54,5 +61,30 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+
+        RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
+
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+
+        RateLimiter::for('password_reset', fn (Request $request) => Limit::perMinute(3)->by($request->ip()));
+
+        Gate::policy(\App\Models\Product::class, \App\Policies\ProductPolicy::class);
+        Gate::policy(\App\Models\Shop::class, \App\Policies\ShopPolicy::class);
+        Gate::policy(\App\Models\Order::class, \App\Policies\OrderPolicy::class);
+        Gate::policy(\App\Models\Dispute::class, \App\Policies\DisputePolicy::class);
+        Gate::policy(\App\Models\Review::class, \App\Policies\ReviewPolicy::class);
+        Gate::policy(\App\Models\Task::class, \App\Policies\TaskPolicy::class);
+        Gate::policy(\App\Models\ShopLocation::class, \App\Policies\ShopLocationPolicy::class);
+        Gate::policy(\App\Models\VendorApplication::class, \App\Policies\VendorApplicationPolicy::class);
+        Gate::policy(\App\Models\VendorRegistration::class, \App\Policies\VendorRegistrationPolicy::class);
+        Gate::policy(\App\Models\Coupon::class, \App\Policies\CouponPolicy::class);
+        Gate::policy(\App\Models\FlashSale::class, \App\Policies\FlashSalePolicy::class);
+        Gate::policy(\App\Models\Payout::class, \App\Policies\PayoutPolicy::class);
+        Gate::policy(\App\Models\Mapper::class, \App\Policies\AdminResourcePolicy::class);
+        Gate::policy(\App\Models\VerificationQueue::class, \App\Policies\AdminResourcePolicy::class);
+        Gate::policy(\App\Models\User::class, \App\Policies\AdminResourcePolicy::class);
+
+        Gate::define('access-analytics', fn (\App\Models\User $user) => in_array($user->role, ['admin', 'vendor']));
     }
 }

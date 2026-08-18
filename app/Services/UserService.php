@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Market;
 use App\Models\User;
 
 class UserService
@@ -51,5 +52,18 @@ class UserService
         $user = User::findOrFail($id);
         $user->update(['status' => $status]);
         return $user;
+    }
+
+    public function setActiveMarket(User $user, ?int $marketId): User
+    {
+        $user->update(['active_market_id' => $marketId]);
+        return $user->load('activeMarket');
+    }
+
+    public function activeMarket(User $user): ?Market
+    {
+        $user->load('activeMarket');
+
+        return $user->activeMarket;
     }
 }

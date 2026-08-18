@@ -79,7 +79,7 @@ class AuthService
     public function me(): User
     {
         $user = JWTAuth::user();
-        $user->load(['mapperProfile', 'shops']);
+        $user->load(['mapperProfile', 'shops', 'activeMarket']);
         return $user;
     }
 

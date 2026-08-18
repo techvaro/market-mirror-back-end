@@ -3,80 +3,73 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreShopRequest;
+use App\Http\Requests\Api\UpdateShopRequest;
+use App\Http\Requests\Api\UploadShopImageRequest;
+use App\Http\Resources\ReviewResource;
+use App\Http\Resources\ShopImageResource;
+use App\Http\Resources\ShopResource;
+use App\Models\Shop;
+use App\Models\ShopImage;
 use App\Services\ShopService;
+use App\Services\UploadService;
 use Illuminate\Http\Request;
 
 class ShopController extends Controller
 {
     public function __construct(
-        private readonly ShopService $shopService
+        private readonly ShopService $shopService,
+        private readonly UploadService $uploadService
     ) {}
 
     public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->shopService->list(
-                $request->only(['market', 'category', 'city', 'user_id', 'search']),
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $shops = $this->shopService->list(
+            $request->only(['market', 'category', 'city', 'user_id', 'search', 'lat', 'lng', 'radius']),
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(ShopResource::collection($shops), $shops);
     }
 
     public function show($id)
     {
         return response()->json([
             'success' => true,
-            'data' => $this->shopService->find($id),
+            'data' => new ShopResource($this->shopService->find($id)),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreShopRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string',
-            'description' => 'nullable|string',
-            'location' => 'required|string',
-            'market' => 'required|string',
-            'city' => 'required|string',
-            'phone' => 'required|string',
-            'shop_number' => 'nullable|string',
-            'hours' => 'nullable|string',
-            'banner_gradient' => 'nullable|string',
-        ]);
+        $this->authorize('create', Shop::class);
 
         return response()->json([
             'success' => true,
-            'data' => $this->shopService->create($validated, $request->user()->id),
+            'data' => new ShopResource($this->shopService->create($request->sanitized(), $request->user()->id)),
             'message' => 'Shop created',
         ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateShopRequest $request, $id)
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'category' => 'sometimes|string',
-            'description' => 'sometimes|nullable|string',
-            'location' => 'sometimes|string',
-            'market' => 'sometimes|string',
-            'city' => 'sometimes|string',
-            'phone' => 'sometimes|string',
-            'shop_number' => 'sometimes|nullable|string',
-            'hours' => 'sometimes|nullable|string',
-            'banner_gradient' => 'sometimes|nullable|string',
-        ]);
+        $shop = $this->shopService->findForOwner($id);
+
+        $this->authorize('update', $shop);
 
         return response()->json([
             'success' => true,
-            'data' => $this->shopService->update($id, $validated),
+            'data' => new ShopResource($this->shopService->update($id, $request->sanitized())),
             'message' => 'Shop updated',
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
+        $shop = $this->shopService->findForOwner($id);
+
+        $this->authorize('delete', $shop);
+
         $this->shopService->delete($id);
 
         return response()->json([
@@ -87,9 +80,45 @@ class ShopController extends Controller
 
     public function reviews($id)
     {
+        $reviews = $this->shopService->reviews($id);
+
+        return $this->paginated(ReviewResource::collection($reviews), $reviews);
+    }
+
+    public function uploadImage(UploadShopImageRequest $request, $id)
+    {
+        $shop = $this->shopService->findForOwner($id);
+
+        $this->authorize('update', $shop);
+
+        $url = $this->uploadService->store($request->file('image'), 'shops');
+
+        $image = ShopImage::create([
+            'shop_id' => $shop->id,
+            'image_url' => $url,
+            'sort_order' => $request->validated('sort_order') ?? 0,
+        ]);
+
         return response()->json([
             'success' => true,
-            'data' => $this->shopService->reviews($id),
+            'data' => new ShopImageResource($image),
+            'message' => 'Shop image uploaded',
+        ], 201);
+    }
+
+    public function removeImage(Request $request, $imageId)
+    {
+        $image = ShopImage::with('shop')->findOrFail($imageId);
+
+        $this->authorize('update', $image->shop);
+
+        $this->uploadService->deleteByUrl($image->image_url);
+
+        $image->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shop image removed',
         ]);
     }
 }

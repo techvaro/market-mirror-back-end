@@ -16,6 +16,8 @@ class Dispute extends Model
         'reason',
         'description',
         'status',
+        'resolved_by',
+        'resolution_note',
     ];
 
     public function user(): BelongsTo

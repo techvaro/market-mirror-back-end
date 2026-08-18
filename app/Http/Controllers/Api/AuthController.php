@@ -3,46 +3,50 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\LoginRequest;
+use App\Http\Requests\Api\RegisterRequest;
+use App\Http\Requests\Api\UpdateProfileRequest;
+use App\Http\Requests\Api\UploadAvatarRequest;
+use App\Http\Resources\UserResource;
 use App\Services\AuthService;
+use App\Services\UploadService;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
     public function __construct(
-        private readonly AuthService $authService
+        private readonly AuthService $authService,
+        private readonly UploadService $uploadService
     ) {}
 
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'phone' => 'nullable|string',
-            'role' => 'nullable|in:buyer,vendor',
-        ]);
-
-        $data = $this->authService->register($validated);
+        $data = $this->authService->register($request->sanitized());
 
         return response()->json([
             'success' => true,
-            'data' => $data,
+            'data' => [
+                'user' => new UserResource($data['user']->load('shops')),
+                'token' => $data['token'],
+                'token_type' => $data['token_type'],
+                'expires_in' => $data['expires_in'],
+            ],
             'message' => 'Registration successful',
         ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
-
         $data = $this->authService->login($request->email, $request->password);
 
         return response()->json([
             'success' => true,
-            'data' => $data,
+            'data' => [
+                'user' => new UserResource($data['user']->load('shops', 'mapperProfile')),
+                'token' => $data['token'],
+                'token_type' => $data['token_type'],
+                'expires_in' => $data['expires_in'],
+            ],
             'message' => 'Login successful',
         ]);
     }
@@ -72,26 +76,37 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->authService->me(),
+            'data' => new UserResource($this->authService->me()),
         ]);
     }
 
-    public function updateProfile(Request $request)
+    public function updateProfile(UpdateProfileRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|nullable|string',
-            'location' => 'sometimes|nullable|string',
-            'profile_image_url' => 'sometimes|nullable|string',
-            'avatar_url' => 'sometimes|nullable|string',
-        ]);
-
-        $user = $this->authService->updateProfile($request->user(), $validated);
+        $user = $this->authService->updateProfile($request->user(), $request->sanitized());
 
         return response()->json([
             'success' => true,
-            'data' => $user,
+            'data' => new UserResource($user),
             'message' => 'Profile updated',
+        ]);
+    }
+
+    public function uploadAvatar(UploadAvatarRequest $request)
+    {
+        $user = $request->user();
+        $url = $this->uploadService->store($request->file('avatar'), 'avatars');
+
+        $this->uploadService->deleteByUrl($user->avatar_url);
+
+        $user = $this->authService->updateProfile($user, [
+            'avatar_url' => $url,
+            'profile_image_url' => $url,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => new UserResource($user),
+            'message' => 'Avatar updated',
         ]);
     }
 }

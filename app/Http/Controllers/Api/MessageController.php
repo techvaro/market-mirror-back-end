@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreMessageRequest;
+use App\Http\Resources\ConversationResource;
+use App\Http\Resources\MessageResource;
 use App\Services\MessageService;
 use Illuminate\Http\Request;
 
@@ -14,26 +17,21 @@ class MessageController extends Controller
 
     public function index(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->messageService->list(
-                $request->user()->id,
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $conversations = $this->messageService->list(
+            $request->user()->id,
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(ConversationResource::collection($conversations), $conversations);
     }
 
-    public function store(Request $request)
+    public function store(StoreMessageRequest $request)
     {
-        $validated = $request->validate([
-            'conversation_id' => 'required|exists:chat_conversations,id',
-            'text' => 'required|string',
-            'image_url' => 'nullable|string',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->messageService->create($validated),
+            'data' => new MessageResource(
+                $this->messageService->create($request->sanitized())
+            ),
             'message' => 'Message sent',
         ], 201);
     }
@@ -42,7 +40,9 @@ class MessageController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->messageService->find($id),
+            'data' => new ConversationResource(
+                $this->messageService->find($id)
+            ),
         ]);
     }
 }

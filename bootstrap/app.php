@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'mapper' => \App\Http\Middleware\MapperMiddleware::class,
             'vendor' => \App\Http\Middleware\VendorMiddleware::class,
+            'market' => \App\Http\Middleware\SetMarketContext::class,
         ]);
 
         $middleware->redirectGuestsTo(function ($request) {

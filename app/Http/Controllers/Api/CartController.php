@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\AddToCartRequest;
+use App\Http\Requests\Api\UpdateCartItemRequest;
+use App\Http\Resources\CartItemResource;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 
@@ -16,38 +19,25 @@ class CartController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->cartService->list($request->user()->id),
+            'data' => CartItemResource::collection($this->cartService->list($request->user()->id)),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(AddToCartRequest $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'variant' => 'nullable|string',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->cartService->add($validated, $request->user()->id),
+            'data' => new CartItemResource($this->cartService->add($request->sanitized(), $request->user()->id)),
             'message' => 'Added to cart',
         ], 201);
     }
 
-    public function update(Request $request, $productId)
+    public function update(UpdateCartItemRequest $request, $productId)
     {
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1',
-            'variant' => 'nullable|string',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->cartService->updateQuantity(
-                $request->user()->id,
-                $productId,
-                $validated
+            'data' => new CartItemResource(
+                $this->cartService->updateQuantity($request->user()->id, $productId, $request->sanitized())
             ),
             'message' => 'Cart updated',
         ]);

@@ -28,6 +28,11 @@ class VendorRegistrationService
         ]);
     }
 
+    public function find(int $id): VendorRegistration
+    {
+        return VendorRegistration::with('mapper')->findOrFail($id);
+    }
+
     public function update(int $id, array $data): VendorRegistration
     {
         $registration = VendorRegistration::findOrFail($id);

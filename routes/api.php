@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\PasswordResetController;
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\ActiveMarketController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BuildingController;
 use App\Http\Controllers\Api\CartController;
@@ -31,25 +32,26 @@ use App\Http\Controllers\Api\VerificationQueueController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Public routes ───────────────────────────────────────────────
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgotPassword']);
-Route::post('/auth/reset-password', [PasswordResetController::class, 'resetPassword']);
-
-Route::get('/shops', [ShopController::class, 'index']);
-Route::get('/shops/{id}', [ShopController::class, 'show']);
-Route::get('/shops/{id}/reviews', [ShopController::class, 'reviews']);
-
-Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:password_reset');
+Route::post('/auth/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:password_reset');
 
 Route::get('/buildings', [BuildingController::class, 'index']);
-Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/markets', [MarketController::class, 'index']);
 Route::get('/markets/{id}', [MarketController::class, 'show']);
-Route::get('/search', [SearchController::class, 'index']);
-
 Route::get('/faqs', [HelpController::class, 'faqs']);
+
+// Buyer discovery routes are market-aware (X-Market-Id header or ?market_id=)
+Route::middleware(['market'])->group(function () {
+    Route::get('/shops', [ShopController::class, 'index']);
+    Route::get('/shops/{id}', [ShopController::class, 'show']);
+    Route::get('/shops/{id}/reviews', [ShopController::class, 'reviews']);
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{id}', [ProductController::class, 'show']);
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/search', [SearchController::class, 'index']);
+});
 
 // ─── Authenticated routes (any role) ─────────────────────────────
 Route::middleware(['auth:api'])->group(function () {
@@ -57,24 +59,30 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/auth/profile/avatar', [AuthController::class, 'uploadAvatar']);
 
-    // Orders
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::get('/orders/{id}', [OrderController::class, 'show']);
-    Route::put('/orders/{id}', [OrderController::class, 'update']);
+    // Persistent active-market preference
+    Route::get('/user/active-market', [ActiveMarketController::class, 'show']);
+    Route::post('/user/active-market', [ActiveMarketController::class, 'store']);
 
+    // Orders (market-aware checkout: validates items against the active market)
+    Route::middleware(['market'])->group(function () {
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::get('/orders/{id}', [OrderController::class, 'show']);
+        Route::put('/orders/{id}', [OrderController::class, 'update']);
+    });
     // Reviews
     Route::get('/reviews', [ReviewController::class, 'index']);
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::post('/reviews/{id}/reply', [ReviewController::class, 'reply']);
+    Route::post('/reviews/{id}/images', [ReviewController::class, 'uploadImage']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 
     // Disputes
     Route::get('/disputes', [DisputeController::class, 'index']);
     Route::post('/disputes', [DisputeController::class, 'store']);
     Route::put('/disputes/{id}', [DisputeController::class, 'update']);
-
     // Vendor Applications
     Route::get('/vendor-applications', [VendorApplicationController::class, 'index']);
     Route::post('/vendor-applications', [VendorApplicationController::class, 'store']);
@@ -93,22 +101,28 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/payments', [PaymentController::class, 'index']);
     Route::post('/payments', [PaymentController::class, 'store']);
 
-    // Cart
-    Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart', [CartController::class, 'store']);
-    Route::put('/cart/{productId}', [CartController::class, 'update']);
-    Route::delete('/cart/{productId}', [CartController::class, 'destroy']);
-    Route::delete('/cart', [CartController::class, 'clear']);
+    // Cart (market-aware: checkout validates items against the active market)
+    Route::middleware(['market'])->group(function () {
+        Route::get('/cart', [CartController::class, 'index']);
+        Route::post('/cart', [CartController::class, 'store']);
+        Route::put('/cart/{productId}', [CartController::class, 'update']);
+        Route::delete('/cart/{productId}', [CartController::class, 'destroy']);
+        Route::delete('/cart', [CartController::class, 'clear']);
+    });
 
     // Shops (authenticated)
     Route::post('/shops', [ShopController::class, 'store']);
     Route::put('/shops/{id}', [ShopController::class, 'update']);
     Route::delete('/shops/{id}', [ShopController::class, 'destroy']);
+    Route::post('/shops/{id}/images', [ShopController::class, 'uploadImage']);
+    Route::delete('/shop-images/{imageId}', [ShopController::class, 'removeImage']);
 
     // Products (authenticated)
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+    Route::post('/products/{id}/image', [ProductController::class, 'uploadImage']);
+    Route::delete('/products/{id}/image', [ProductController::class, 'removeImage']);
 
     // Analytics (vendor)
     Route::get('/analytics/vendor', [AnalyticsController::class, 'vendor']);
@@ -117,6 +131,8 @@ Route::middleware(['auth:api'])->group(function () {
     // Payouts (vendor)
     Route::get('/payouts', [PayoutController::class, 'index']);
     Route::post('/payouts', [PayoutController::class, 'store']);
+    Route::get('/payouts/bank-details', [PayoutController::class, 'bankDetails']);
+    Route::put('/payouts/bank-details', [PayoutController::class, 'updateBankDetails']);
     Route::get('/payouts/{id}', [PayoutController::class, 'show']);
 
     // Marketing (vendor)
@@ -144,18 +160,19 @@ Route::middleware(['auth:api', 'mapper'])->group(function () {
     // Tasks
     Route::get('/tasks', [TaskController::class, 'index']);
     Route::get('/tasks/{id}', [TaskController::class, 'show']);
-    Route::post('/tasks', [TaskController::class, 'store']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
 
     // Shop Locations
     Route::get('/shop-locations', [ShopLocationController::class, 'index']);
     Route::post('/shop-locations', [ShopLocationController::class, 'store']);
     Route::put('/shop-locations/{id}', [ShopLocationController::class, 'update']);
+    Route::post('/shop-locations/{id}/photos', [ShopLocationController::class, 'uploadPhoto']);
 
     // Vendor Registrations
     Route::get('/vendor-registrations', [VendorRegistrationController::class, 'index']);
     Route::post('/vendor-registrations', [VendorRegistrationController::class, 'store']);
     Route::put('/vendor-registrations/{id}', [VendorRegistrationController::class, 'update']);
+    Route::post('/vendor-registrations/{id}/photos', [VendorRegistrationController::class, 'uploadPhoto']);
 });
 
 // ─── Admin-only routes ───────────────────────────────────────────
@@ -179,6 +196,8 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::delete('/mappers/{id}', [MapperController::class, 'destroy']);
     Route::post('/mappers/assign-task', [MapperController::class, 'assignTask']);
     Route::get('/mappers-dashboard', [MapperController::class, 'dashboard']);
+    Route::post('/tasks', [TaskController::class, 'store']);
+    Route::post('/disputes/{id}/resolve', [DisputeController::class, 'resolve']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreTicketRequest;
+use App\Http\Resources\FaqResource;
+use App\Http\Resources\HelpTicketResource;
 use App\Services\HelpService;
 use Illuminate\Http\Request;
 
@@ -15,26 +18,21 @@ class HelpController extends Controller
     // ─── Tickets ──────────────────────────────────────────────────
     public function tickets(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $this->helpService->listTickets(
-                $request->user()->id,
-                $request->get('per_page', 15)
-            ),
-        ]);
+        $tickets = $this->helpService->listTickets(
+            $request->user()->id,
+            $request->get('per_page', 15)
+        );
+
+        return $this->paginated(HelpTicketResource::collection($tickets), $tickets);
     }
 
-    public function storeTicket(Request $request)
+    public function storeTicket(StoreTicketRequest $request)
     {
-        $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'message' => 'nullable|string',
-            'category' => 'nullable|string',
-        ]);
-
         return response()->json([
             'success' => true,
-            'data' => $this->helpService->createTicket($validated, $request->user()->id),
+            'data' => new HelpTicketResource(
+                $this->helpService->createTicket($request->sanitized(), $request->user()->id)
+            ),
             'message' => 'Ticket created',
         ], 201);
     }
@@ -44,7 +42,9 @@ class HelpController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->helpService->listFaqs($request->get('category')),
+            'data' => FaqResource::collection(
+                $this->helpService->listFaqs($request->get('category'))
+            ),
         ]);
     }
 }
