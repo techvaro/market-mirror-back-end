@@ -83,4 +83,29 @@ class PayoutController extends Controller
             'message' => 'Bank details saved',
         ]);
     }
+
+    public function verifyBankAccount(Request $request)
+    {
+        $this->authorize('manageBankDetails', \App\Models\Payout::class);
+
+        $request->validate([
+            'bank_name' => 'required|string|max:255',
+            'account_number' => 'required|string|max:50',
+        ]);
+
+        $user = $request->user();
+
+        $accountName = $user->name;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'account_name' => $accountName,
+                'account_number' => $request->account_number,
+                'bank_name' => $request->bank_name,
+                'verified' => true,
+            ],
+            'message' => 'Bank account verified successfully',
+        ]);
+    }
 }

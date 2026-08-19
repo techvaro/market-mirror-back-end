@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\API\PasswordResetController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\ActiveMarketController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BuildingController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
@@ -31,9 +32,17 @@ use App\Http\Controllers\Api\VendorRegistrationController;
 use App\Http\Controllers\Api\VerificationQueueController;
 use Illuminate\Support\Facades\Route;
 
+// ─── Health check (no auth required) ─────────────────────────────
+Route::get('/health', fn () => response()->json([
+    'status' => 'ok',
+    'timestamp' => now()->toIso8601String(),
+    'service' => 'market-mirror-api',
+]));
+
 // ─── Public routes ───────────────────────────────────────────────
 Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:auth');
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/auth/refresh', [AuthController::class, 'refreshFromRefreshToken']);
 Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:password_reset');
 Route::post('/auth/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:password_reset');
 
@@ -56,7 +65,6 @@ Route::middleware(['market'])->group(function () {
 // ─── Authenticated routes (any role) ─────────────────────────────
 Route::middleware(['auth:api'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/profile/avatar', [AuthController::class, 'uploadAvatar']);
@@ -71,6 +79,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/orders', [OrderController::class, 'store']);
         Route::get('/orders/{id}', [OrderController::class, 'show']);
         Route::put('/orders/{id}', [OrderController::class, 'update']);
+        Route::get('/orders/{id}/tracking', [OrderController::class, 'tracking']);
     });
     // Reviews
     Route::get('/reviews', [ReviewController::class, 'index']);
@@ -133,6 +142,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/payouts', [PayoutController::class, 'store']);
     Route::get('/payouts/bank-details', [PayoutController::class, 'bankDetails']);
     Route::put('/payouts/bank-details', [PayoutController::class, 'updateBankDetails']);
+    Route::post('/payouts/bank-account/verify', [PayoutController::class, 'verifyBankAccount']);
     Route::get('/payouts/{id}', [PayoutController::class, 'show']);
 
     // Marketing (vendor)
@@ -201,4 +211,7 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Audit Logs
+    Route::get('/audit-logs', [AuditLogController::class, 'index']);
 });

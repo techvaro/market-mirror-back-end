@@ -30,6 +30,8 @@ class AuthController extends Controller
                 'token' => $data['token'],
                 'token_type' => $data['token_type'],
                 'expires_in' => $data['expires_in'],
+                'refresh_token' => $data['refresh_token'],
+                'refresh_token_expires_in' => $data['refresh_token_expires_in'],
             ],
             'message' => 'Registration successful',
         ], 201);
@@ -46,6 +48,8 @@ class AuthController extends Controller
                 'token' => $data['token'],
                 'token_type' => $data['token_type'],
                 'expires_in' => $data['expires_in'],
+                'refresh_token' => $data['refresh_token'],
+                'refresh_token_expires_in' => $data['refresh_token_expires_in'],
             ],
             'message' => 'Login successful',
         ]);
@@ -61,13 +65,24 @@ class AuthController extends Controller
         ]);
     }
 
-    public function refresh()
+    public function refreshFromRefreshToken(Request $request)
     {
-        $data = $this->authService->refresh();
+        $request->validate([
+            'refresh_token' => 'required|string',
+        ]);
+
+        $data = $this->authService->refreshFromRefreshToken($request->refresh_token);
 
         return response()->json([
             'success' => true,
-            'data' => $data,
+            'data' => [
+                'user' => new UserResource($data['user']->load('shops', 'mapperProfile')),
+                'token' => $data['token'],
+                'token_type' => $data['token_type'],
+                'expires_in' => $data['expires_in'],
+                'refresh_token' => $data['refresh_token'],
+                'refresh_token_expires_in' => $data['refresh_token_expires_in'],
+            ],
             'message' => 'Token refreshed',
         ]);
     }

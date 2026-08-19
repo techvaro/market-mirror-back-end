@@ -18,11 +18,15 @@ class AuthService
         $user = User::create($data);
         $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
 
+        $refreshToken = $this->generateRefreshToken($user);
+
         return [
             'user' => $user,
             'token' => $token,
             'token_type' => 'bearer',
             'expires_in' => config('jwt.ttl') * 60,
+            'refresh_token' => $refreshToken,
+            'refresh_token_expires_in' => 30 * 24 * 60 * 60,
         ];
     }
 
@@ -51,12 +55,65 @@ class AuthService
             ]);
         }
 
+        $refreshToken = $this->generateRefreshToken($user);
+
         return [
             'user' => $user,
             'token' => $token,
             'token_type' => 'bearer',
             'expires_in' => config('jwt.ttl') * 60,
+            'refresh_token' => $refreshToken,
+            'refresh_token_expires_in' => 30 * 24 * 60 * 60,
         ];
+    }
+
+    public function refreshFromRefreshToken(string $refreshToken): array
+    {
+        try {
+            $payload = JWTAuth::setToken($refreshToken)->getPayload();
+
+            if ($payload->get('type') !== 'refresh') {
+                throw ValidationException::withMessages([
+                    'token' => ['Invalid refresh token.'],
+                ]);
+            }
+
+            $userId = $payload->get('sub');
+            $user = User::findOrFail($userId);
+
+            JWTAuth::invalidate($refreshToken);
+
+            $newAccessToken = JWTAuth::claims(['role' => $user->role])->fromUser($user);
+            $newRefreshToken = $this->generateRefreshToken($user);
+
+            return [
+                'user' => $user,
+                'token' => $newAccessToken,
+                'token_type' => 'bearer',
+                'expires_in' => config('jwt.ttl') * 60,
+                'refresh_token' => $newRefreshToken,
+                'refresh_token_expires_in' => 30 * 24 * 60 * 60,
+            ];
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            throw ValidationException::withMessages([
+                'token' => ['Refresh token is invalid or expired.'],
+            ]);
+        }
+    }
+
+    private function generateRefreshToken(User $user): string
+    {
+        $originalTtl = config('jwt.ttl');
+        config(['jwt.ttl' => 30 * 24 * 60]); // 30 days
+
+        $refreshToken = JWTAuth::claims([
+            'role' => $user->role,
+            'type' => 'refresh',
+        ])->fromUser($user);
+
+        config(['jwt.ttl' => $originalTtl]); // restore
+
+        return $refreshToken;
     }
 
     public function logout(): bool

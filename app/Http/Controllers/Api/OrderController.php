@@ -8,6 +8,7 @@ use App\Http\Requests\Api\CheckoutRequest;
 use App\Http\Requests\Api\UpdateOrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Models\OrderStatusHistory;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 
@@ -68,6 +69,35 @@ class OrderController extends Controller
             'success' => true,
             'data' => new OrderResource($updated->load(['user', 'items.product'])),
             'message' => 'Order updated',
+        ]);
+    }
+
+    public function tracking(Request $request, $id)
+    {
+        $order = $this->orderService->find($id);
+
+        $this->authorize('view', $order);
+
+        $history = OrderStatusHistory::where('order_id', $order->id)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(fn ($h) => [
+                'status' => $h->status,
+                'note' => $h->note,
+                'location' => $h->location,
+                'timestamp' => $h->created_at->toISOString(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'current_status' => $order->status,
+                'delivery_method' => $order->delivery_method,
+                'estimated_delivery' => $order->estimated_delivery,
+                'history' => $history,
+            ],
         ]);
     }
 }
