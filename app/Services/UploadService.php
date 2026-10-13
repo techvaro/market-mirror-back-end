@@ -19,7 +19,7 @@ class UploadService
 
         $path = $file->storeAs(
             $directory,
-            Str::uuid() . '.' . $extension,
+            Str::uuid().'.'.$extension,
             'public'
         );
 

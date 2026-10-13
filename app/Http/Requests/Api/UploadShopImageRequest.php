@@ -15,6 +15,7 @@ class UploadShopImageRequest extends FormRequest
     {
         return [
             'image' => ['required', 'image', 'mimes:jpeg,png,webp,gif', 'max:2048'],
+            'image_type' => ['required', 'in:banner,logo,gallery'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];
     }

@@ -53,6 +53,7 @@ class ShopLocationService
     {
         $location = ShopLocation::findOrFail($id);
         $location->update($data);
+
         return $location;
     }
 }

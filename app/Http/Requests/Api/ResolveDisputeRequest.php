@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api;
 
 use App\Actions\Disputes\ResolveDisputeAction;
+use App\Models\Dispute;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +11,7 @@ class ResolveDisputeRequest extends ApiFormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('resolve', \App\Models\Dispute::class);
+        return Gate::allows('resolve', Dispute::class);
     }
 
     public function rules(): array

@@ -11,17 +11,17 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',
             ], 401);
         }
 
-        if (!in_array($user->role, $roles)) {
+        if (! in_array($user->role, $roles)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized. Required role: ' . implode(' or ', $roles),
+                'message' => 'Unauthorized. Required role: '.implode(' or ', $roles),
             ], 403);
         }
 

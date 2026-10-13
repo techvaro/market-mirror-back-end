@@ -17,6 +17,14 @@ class NotificationService
     {
         $notification = Notification::where('user_id', $userId)->findOrFail($id);
         $notification->update(['read' => true]);
+
         return $notification;
+    }
+
+    public function markAllRead(int $userId): void
+    {
+        Notification::where('user_id', $userId)
+            ->where('read', false)
+            ->update(['read' => true]);
     }
 }

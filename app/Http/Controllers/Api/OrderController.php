@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CheckoutRequest;
 use App\Http\Requests\Api\UpdateOrderRequest;
 use App\Http\Resources\OrderResource;
-use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Services\OrderService;
 use Illuminate\Http\Request;

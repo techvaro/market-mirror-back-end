@@ -29,8 +29,18 @@ class NotificationController extends Controller
         return response()->json([
             'success' => true,
             'data' => new NotificationResource(
-                $this->notificationService->markRead($id, $request->user()->id)
+                $this->notificationService->markRead((int) $id, $request->user()->id)
             ),
+        ]);
+    }
+
+    public function markAllRead(Request $request)
+    {
+        $this->notificationService->markAllRead($request->user()->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications marked as read',
         ]);
     }
 }

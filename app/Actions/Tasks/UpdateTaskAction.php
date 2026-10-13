@@ -4,7 +4,6 @@ namespace App\Actions\Tasks;
 
 use App\Models\Task;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Updates the status of a mapper task and keeps the mapper counters in sync.

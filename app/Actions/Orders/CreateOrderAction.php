@@ -3,8 +3,10 @@
 namespace App\Actions\Orders;
 
 use App\Models\CartItem;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\OrderService;
 use App\Support\MarketContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +19,8 @@ use Illuminate\Validation\ValidationException;
 class CreateOrderAction
 {
     public function __construct(
-        private readonly MarketContext $marketContext
+        private readonly MarketContext $marketContext,
+        private readonly OrderService $orderService
     ) {}
 
     public function execute(array $data, int $userId): Order
@@ -39,8 +42,9 @@ class CreateOrderAction
 
             $order = Order::create([
                 'user_id' => $userId,
-                'order_number' => 'ORD-' . strtoupper(uniqid()),
-                'status' => 'confirmed',
+                'order_number' => 'ORD-'.strtoupper(uniqid()),
+                // The order is not confirmed until Flutterwave independently verifies payment.
+                'status' => 'payment_pending',
                 'delivery_method' => $data['delivery_method'] ?? 'delivery',
                 'payment_method' => $data['payment_method'] ?? 'paystack',
                 'subtotal' => $subtotal,
@@ -56,7 +60,15 @@ class CreateOrderAction
 
             $order->items()->createMany($items);
 
-            $this->clearPurchasedItems($userId, $items);
+            $this->orderService->notifyVendors($order);
+
+            Notification::create([
+                'user_id' => $userId,
+                'type' => 'order',
+                'title' => 'Order Placed',
+                'message' => "Your order {$order->order_number} has been placed and is awaiting payment confirmation.",
+                'link' => "/orders/{$order->id}",
+            ]);
 
             return $order->load(['user', 'items.product']);
         });
@@ -103,7 +115,7 @@ class CreateOrderAction
     }
 
     /**
-     * @param array<int, array<string, mixed>> $items
+     * @param  array<int, array<string, mixed>>  $items
      */
     private function assertItemsInActiveMarket(array $items): void
     {
@@ -125,7 +137,7 @@ class CreateOrderAction
     }
 
     /**
-     * @param array<int, array<string, mixed>> $items
+     * @param  array<int, array<string, mixed>>  $items
      */
     private function clearPurchasedItems(int $userId, array $items): void
     {

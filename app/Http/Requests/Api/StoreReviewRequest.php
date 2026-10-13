@@ -9,7 +9,8 @@ class StoreReviewRequest extends ApiFormRequest
         return [
             'shop_id' => ['required', 'integer', 'exists:shops,id'],
             'rating' => ['required', 'integer', 'between:1,5'],
-            'text' => ['required', 'string', 'max:2000'],
+            'text' => ['required_without:comment', 'string', 'max:2000'],
+            'comment' => ['required_without:text', 'string', 'max:2000'],
         ];
     }
 }

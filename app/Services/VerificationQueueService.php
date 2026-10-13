@@ -21,6 +21,7 @@ class VerificationQueueService
     {
         $item = VerificationQueue::findOrFail($id);
         $item->update($data);
+
         return $item;
     }
 }

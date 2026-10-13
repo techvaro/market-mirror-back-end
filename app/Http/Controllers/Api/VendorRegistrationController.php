@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ReviewVendorRegistrationRequest;
 use App\Http\Requests\Api\StoreVendorRegistrationRequest;
 use App\Http\Requests\Api\UpdateVendorRegistrationRequest;
 use App\Http\Requests\Api\UploadVendorRegistrationPhotoRequest;
@@ -22,10 +23,40 @@ class VendorRegistrationController extends Controller
     {
         $registrations = $this->vendorRegService->list(
             $request->only(['status']),
-            $request->get('per_page', 15)
+            (int) $request->get('per_page', 15),
+            $request->user()->mapperProfile?->id
         );
 
         return $this->paginated(VendorRegistrationResource::collection($registrations), $registrations);
+    }
+
+    public function adminIndex(Request $request)
+    {
+        $registrations = $this->vendorRegService->adminList(
+            $request->only(['status', 'market', 'search']),
+            (int) $request->get('per_page', 15)
+        );
+
+        return $this->paginated(VendorRegistrationResource::collection($registrations), $registrations);
+    }
+
+    public function show($id)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => new VendorRegistrationResource($this->vendorRegService->find($id)),
+        ]);
+    }
+
+    public function review(ReviewVendorRegistrationRequest $request, $id)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => new VendorRegistrationResource(
+                $this->vendorRegService->review($id, $request->sanitized(), $request->user()->id)
+            ),
+            'message' => 'Registration reviewed',
+        ]);
     }
 
     public function store(StoreVendorRegistrationRequest $request)

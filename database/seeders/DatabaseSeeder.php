@@ -2,22 +2,28 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Building;
+use App\Models\CartItem;
+use App\Models\Category;
+use App\Models\ChatConversation;
+use App\Models\ChatMessage;
 use App\Models\Mapper;
-use App\Models\Shop;
-use App\Models\Product;
+use App\Models\Market;
+use App\Models\Notification;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\Review;
 use App\Models\Service;
-use App\Models\Building;
-use App\Models\Task;
+use App\Models\Shop;
 use App\Models\ShopLocation;
+use App\Models\State;
+use App\Models\Task;
+use App\Models\User;
 use App\Models\VendorRegistration;
 use App\Models\VerificationQueue;
-use App\Models\Category;
-use App\Models\Market;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -77,14 +83,41 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Create States (only Lagos active; admin can activate others later)
+        $statesData = [
+            ['name' => 'Lagos', 'is_active' => true, 'sort_order' => 1],
+            ['name' => 'Abuja (FCT)', 'is_active' => false, 'sort_order' => 2],
+            ['name' => 'Rivers', 'is_active' => false, 'sort_order' => 3],
+            ['name' => 'Ogun', 'is_active' => false, 'sort_order' => 4],
+            ['name' => 'Anambra', 'is_active' => false, 'sort_order' => 5],
+            ['name' => 'Kano', 'is_active' => false, 'sort_order' => 6],
+        ];
+
+        $stateModels = [];
+        foreach ($statesData as $sd) {
+            $stateModels[] = State::create($sd);
+        }
+
+        // Create Markets (only Computer Village active; scoped to Lagos)
+        $marketsData = [
+            ['name' => 'Alaba International Market', 'description' => 'The largest electronics market in West Africa.', 'location' => 'Ojo, Lagos', 'city' => 'Lagos', 'state' => 'Lagos', 'state_id' => $stateModels[0]->id, 'shop_count' => 5000, 'category' => 'Market Complex', 'is_active' => false],
+            ['name' => 'Computer Village', 'description' => 'The prime ICT hub of Nigeria.', 'location' => 'Ikeja, Lagos', 'city' => 'Lagos', 'state' => 'Lagos', 'state_id' => $stateModels[0]->id, 'shop_count' => 4000, 'category' => 'Market Complex', 'is_active' => true],
+            ['name' => 'Trade Fair Complex', 'description' => 'Major hub for cosmetics and fabrics.', 'location' => 'Badagry Expressway, Lagos', 'city' => 'Lagos', 'state' => 'Lagos', 'state_id' => $stateModels[0]->id, 'shop_count' => 3500, 'category' => 'Market Complex', 'is_active' => false],
+        ];
+
+        $marketModels = [];
+        foreach ($marketsData as $md) {
+            $marketModels[] = Market::create($md);
+        }
+
         // Create Shops (from market-mirror-fe mockData)
         $shopsData = [
-            ['user_id' => $vendorUserModels[0]->id, 'name' => 'TechCity Electronics', 'category' => 'Electronics', 'rating' => 4.8, 'review_count' => 342, 'product_count' => 4, 'description' => 'Your premium destination for authentic electronics, home theater systems, and smart home devices.', 'location' => 'Zone A Block 12, Alaba International Market', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #1e3a8a, #3b82f6)', 'market' => 'Alaba International Market', 'city' => 'Lagos', 'phone' => '+234 803 123 4567', 'shop_number' => 'Zone A, Suite 12'],
-            ['user_id' => $vendorUserModels[0]->id, 'name' => 'PhoneHub Plus', 'category' => 'Phones & Accessories', 'rating' => 4.9, 'review_count' => 892, 'product_count' => 4, 'description' => 'Latest smartphones, tablets, and premium accessories.', 'location' => 'Shop 14, Computer Village', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #4c1d95, #8b5cf6)', 'market' => 'Computer Village', 'city' => 'Lagos', 'phone' => '+234 812 987 6543', 'shop_number' => 'Shop 14'],
-            ['user_id' => $vendorUserModels[1]->id, 'name' => 'GlobalFabrics', 'category' => 'Fabrics & Fashion', 'rating' => 4.5, 'review_count' => 128, 'product_count' => 4, 'description' => 'High-quality Ankara, lace, Senator materials, and pure cotton fabrics.', 'location' => 'Hall 3 Shop 22, Trade Fair Complex', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #be123c, #f43f5e)', 'market' => 'Trade Fair Complex', 'city' => 'Lagos', 'phone' => '+234 802 333 4444', 'shop_number' => 'Hall 3, Shop 22'],
-            ['user_id' => $vendorUserModels[1]->id, 'name' => 'Kemis Home Appliances', 'category' => 'Home Appliances', 'rating' => 4.2, 'review_count' => 245, 'product_count' => 4, 'description' => 'Durable and affordable home appliances.', 'location' => 'Zone D Block 8, Alaba International Market', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #047857, #10b981)', 'market' => 'Alaba International Market', 'city' => 'Lagos', 'phone' => '+234 807 444 9900', 'shop_number' => 'Zone D, Suite 7'],
-            ['user_id' => $vendorUserModels[2]->id, 'name' => 'AutoParts Direct', 'category' => 'Auto Parts', 'rating' => 4.7, 'review_count' => 412, 'product_count' => 4, 'description' => 'Genuine Toyota, Honda, and Mercedes spare parts.', 'location' => 'Zone E Block 15, Alaba International Market', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #b45309, #f59e0b)', 'market' => 'Alaba International Market', 'city' => 'Lagos', 'phone' => '+234 809 666 3344', 'shop_number' => 'Zone E, Suite 15'],
-            ['user_id' => $vendorUserModels[3]->id, 'name' => 'BeautyGlow Lagos', 'category' => 'Beauty', 'rating' => 4.6, 'review_count' => 560, 'product_count' => 4, 'description' => 'Original cosmetics, skincare, and fragrances.', 'location' => 'Hall 1 Shop 9, Trade Fair Complex', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #be185d, #ec4899)', 'market' => 'Trade Fair Complex', 'city' => 'Lagos', 'phone' => '+234 806 222 8811', 'shop_number' => 'Hall 1, Shop 9'],
+            ['user_id' => $vendorUserModels[0]->id, 'market_id' => $marketModels[0]->id, 'name' => 'TechCity Electronics', 'category' => 'Electronics', 'rating' => 4.8, 'review_count' => 342, 'product_count' => 4, 'description' => 'Your premium destination for authentic electronics, home theater systems, and smart home devices.', 'location' => 'Zone A Block 12, Alaba International Market', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #1e3a8a, #3b82f6)', 'market' => 'Alaba International Market', 'city' => 'Lagos', 'phone' => '+234 803 123 4567', 'shop_number' => 'Zone A, Suite 12'],
+            ['user_id' => $vendorUserModels[0]->id, 'market_id' => $marketModels[1]->id, 'name' => 'PhoneHub Plus', 'category' => 'Phones & Accessories', 'rating' => 4.9, 'review_count' => 892, 'product_count' => 4, 'description' => 'Latest smartphones, tablets, and premium accessories.', 'location' => 'Shop 14, Computer Village', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #4c1d95, #8b5cf6)', 'market' => 'Computer Village', 'city' => 'Lagos', 'phone' => '+234 812 987 6543', 'shop_number' => 'Shop 14'],
+            ['user_id' => $vendorUserModels[1]->id, 'market_id' => $marketModels[2]->id, 'name' => 'GlobalFabrics', 'category' => 'Fabrics & Fashion', 'rating' => 4.5, 'review_count' => 128, 'product_count' => 4, 'description' => 'High-quality Ankara, lace, Senator materials, and pure cotton fabrics.', 'location' => 'Hall 3 Shop 22, Trade Fair Complex', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #be123c, #f43f5e)', 'market' => 'Trade Fair Complex', 'city' => 'Lagos', 'phone' => '+234 802 333 4444', 'shop_number' => 'Hall 3, Shop 22'],
+            ['user_id' => $vendorUserModels[1]->id, 'market_id' => $marketModels[0]->id, 'name' => 'Kemis Home Appliances', 'category' => 'Home Appliances', 'rating' => 4.2, 'review_count' => 245, 'product_count' => 4, 'description' => 'Durable and affordable home appliances.', 'location' => 'Zone D Block 8, Alaba International Market', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #047857, #10b981)', 'market' => 'Alaba International Market', 'city' => 'Lagos', 'phone' => '+234 807 444 9900', 'shop_number' => 'Zone D, Suite 7'],
+            ['user_id' => $vendorUserModels[2]->id, 'market_id' => $marketModels[0]->id, 'name' => 'AutoParts Direct', 'category' => 'Auto Parts', 'rating' => 4.7, 'review_count' => 412, 'product_count' => 4, 'description' => 'Genuine Toyota, Honda, and Mercedes spare parts.', 'location' => 'Zone E Block 15, Alaba International Market', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #b45309, #f59e0b)', 'market' => 'Alaba International Market', 'city' => 'Lagos', 'phone' => '+234 809 666 3344', 'shop_number' => 'Zone E, Suite 15'],
+            ['user_id' => $vendorUserModels[3]->id, 'market_id' => $marketModels[2]->id, 'name' => 'BeautyGlow Lagos', 'category' => 'Beauty', 'rating' => 4.6, 'review_count' => 560, 'product_count' => 4, 'description' => 'Original cosmetics, skincare, and fragrances.', 'location' => 'Hall 1 Shop 9, Trade Fair Complex', 'hours' => '8am - 6pm (Mon - Sat)', 'banner_gradient' => 'linear-gradient(135deg, #be185d, #ec4899)', 'market' => 'Trade Fair Complex', 'city' => 'Lagos', 'phone' => '+234 806 222 8811', 'shop_number' => 'Hall 1, Shop 9'],
         ];
 
         $shopModels = [];
@@ -247,22 +280,17 @@ class DatabaseSeeder extends Seeder
         foreach ($categories as $cat) {
             Category::create([
                 'name' => $cat,
-                'slug' => \Illuminate\Support\Str::slug($cat),
+                'slug' => Str::slug($cat),
                 'products_count' => Product::where('category', 'like', "%{$cat}%")->count(),
             ]);
         }
-
-        // Create Markets
-        Market::create(['name' => 'Alaba International Market', 'description' => 'The largest electronics market in West Africa.', 'location' => 'Ojo, Lagos', 'city' => 'Lagos', 'shop_count' => 5000, 'category' => 'Market Complex']);
-        Market::create(['name' => 'Computer Village', 'description' => 'The prime ICT hub of Nigeria.', 'location' => 'Ikeja, Lagos', 'city' => 'Lagos', 'shop_count' => 4000, 'category' => 'Market Complex']);
-        Market::create(['name' => 'Trade Fair Complex', 'description' => 'Major hub for cosmetics and fabrics.', 'location' => 'Badagry Expressway, Lagos', 'city' => 'Lagos', 'shop_count' => 3500, 'category' => 'Market Complex']);
 
         // Create Orders
         $buyerUsers = User::where('role', 'buyer')->get();
         foreach ($buyerUsers->take(3) as $buyer) {
             Order::create([
                 'user_id' => $buyer->id,
-                'order_number' => 'ORD-' . strtoupper(uniqid()),
+                'order_number' => 'ORD-'.strtoupper(uniqid()),
                 'status' => collect(['confirmed', 'packing', 'out_for_delivery', 'delivered'])->random(),
                 'delivery_method' => collect(['delivery', 'pickup'])->random(),
                 'subtotal' => rand(15000, 500000),
@@ -271,5 +299,39 @@ class DatabaseSeeder extends Seeder
                 'payment_method' => 'paystack',
             ]);
         }
+
+        // Create Conversations
+        $conv1 = ChatConversation::create(['user_id' => $buyerUsers->first()->id, 'shop_id' => $shopModels[0]->id]);
+        $conv2 = ChatConversation::create(['user_id' => $buyerUsers->first()->id, 'shop_id' => $shopModels[1]->id]);
+        $conv3 = ChatConversation::create(['user_id' => $buyerUsers->first()->id, 'shop_id' => $shopModels[2]->id]);
+
+        // Create Messages for conversation 1
+        ChatMessage::create(['conversation_id' => $conv1->id, 'sender' => 'user', 'text' => 'Hello! Is the LG 65-inch TV available?', 'read' => true]);
+        ChatMessage::create(['conversation_id' => $conv1->id, 'sender' => 'vendor', 'text' => 'Yes, we have it in stock! It comes with a 2-year warranty.', 'read' => true]);
+        ChatMessage::create(['conversation_id' => $conv1->id, 'sender' => 'user', 'text' => "What's the best price you can offer?", 'read' => true]);
+        ChatMessage::create(['conversation_id' => $conv1->id, 'sender' => 'vendor', 'text' => 'We can do ₦430,000 with free delivery within Lagos.', 'read' => false]);
+
+        // Create Messages for conversation 2
+        ChatMessage::create(['conversation_id' => $conv2->id, 'sender' => 'user', 'text' => 'Do you have iPhone 15 Pro Max in stock?', 'read' => true]);
+        ChatMessage::create(['conversation_id' => $conv2->id, 'sender' => 'vendor', 'text' => 'Yes! We have all colors. Would you like to order?', 'read' => false]);
+
+        // Create Messages for conversation 3
+        ChatMessage::create(['conversation_id' => $conv3->id, 'sender' => 'vendor', 'text' => 'Thanks for your interest in our fabrics! How can I help?', 'read' => true]);
+        ChatMessage::create(['conversation_id' => $conv3->id, 'sender' => 'user', 'text' => 'Do you have Swiss Lace in stock?', 'read' => false]);
+
+        // Create Notifications
+        Notification::create(['user_id' => $buyerUsers->first()->id, 'type' => 'chat', 'title' => 'New message from TechCity Electronics', 'message' => 'We can do ₦430,000 with free delivery within Lagos.', 'read' => false, 'link' => '/chat/'.$conv1->id]);
+        Notification::create(['user_id' => $buyerUsers->first()->id, 'type' => 'order', 'title' => 'Order shipped', 'message' => 'Your order has been dispatched.', 'read' => false]);
+        Notification::create(['user_id' => $buyerUsers->first()->id, 'type' => 'order', 'title' => 'Order delivered', 'message' => 'Your order has been delivered successfully.', 'read' => true]);
+        Notification::create(['user_id' => $buyerUsers->first()->id, 'type' => 'promo', 'title' => 'Flash Sale - 30% off Electronics', 'message' => "Don't miss out on today's deals.", 'read' => true]);
+        Notification::create(['user_id' => $buyerUsers->first()->id, 'type' => 'chat', 'title' => 'New message from PhoneHub Plus', 'message' => 'Yes! We have all colors. Would you like to order?', 'read' => false, 'link' => '/chat/'.$conv2->id]);
+
+        // Create Cart Items
+        CartItem::create(['user_id' => $buyerUsers->first()->id, 'product_id' => $shopModels[0]->products()->first()->id, 'quantity' => 1]);
+        CartItem::create(['user_id' => $buyerUsers->first()->id, 'product_id' => $shopModels[1]->products()->first()->id, 'quantity' => 2]);
+
+        // Populate vendor-portal data (orders items, payments, payouts, marketing,
+        // support, notifications, conversations) idempotently.
+        $this->call(VendorPortalSeeder::class);
     }
 }

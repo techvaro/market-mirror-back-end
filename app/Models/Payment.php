@@ -19,6 +19,7 @@ class Payment extends Model
         'status',
         'reference',
         'metadata',
+        'provider_transaction_id',
     ];
 
     protected function casts(): array

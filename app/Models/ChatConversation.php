@@ -13,12 +13,18 @@ class ChatConversation extends Model
 
     protected $fillable = [
         'user_id',
+        'admin_id',
         'shop_id',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 
     public function shop(): BelongsTo

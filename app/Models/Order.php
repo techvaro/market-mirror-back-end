@@ -28,6 +28,7 @@ class Order extends Model
         'address_street',
         'address_state',
         'address_city',
+        'payment_method',
     ];
 
     protected function casts(): array

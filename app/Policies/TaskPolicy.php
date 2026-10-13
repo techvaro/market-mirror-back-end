@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Models\Mapper;
 use App\Models\Task;
 use App\Models\User;
 

@@ -16,6 +16,7 @@ class ReviewResource extends JsonResource
             'reviewer_name' => $this->reviewer_name,
             'rating' => (int) $this->rating,
             'text' => $this->text,
+            'comment' => $this->text,
             'reply' => $this->reply,
             'images' => $this->whenLoaded('reviewImages', fn () => $this->reviewImages->pluck('image_url')),
             'shop' => ShopResource::make($this->whenLoaded('shop')),

@@ -16,6 +16,7 @@ class MapperResource extends JsonResource
             'employee_id' => $this->employee_id,
             'assigned_market' => $this->assigned_market,
             'assigned_region' => $this->assigned_region,
+            'status' => $this->accountStatus(),
             'mapper_status' => $this->mapper_status,
             'gps_status' => $this->gps_status,
             'tasks_assigned' => $this->tasks_assigned,
@@ -31,5 +32,22 @@ class MapperResource extends JsonResource
             'tasks' => TaskResource::collection($this->whenLoaded('tasks')),
             'created_at' => $this->created_at,
         ];
+    }
+
+    /**
+     * A mapper is "active" once they have signed in and replaced their
+     * temporary password; until then they are still onboarding ("inactive").
+     * Admin suspension always wins.
+     */
+    private function accountStatus(): string
+    {
+        if ($this->mapper_status === 'suspended') {
+            return 'suspended';
+        }
+
+        $user = $this->relationLoaded('user') ? $this->user : null;
+        $completedOnboarding = $user ? ! $user->must_change_password : false;
+
+        return $completedOnboarding ? 'active' : 'inactive';
     }
 }

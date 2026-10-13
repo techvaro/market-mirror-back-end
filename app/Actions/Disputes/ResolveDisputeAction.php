@@ -5,6 +5,7 @@ namespace App\Actions\Disputes;
 use App\Models\Dispute;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\RefundService;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -17,9 +18,11 @@ class ResolveDisputeAction
 {
     public const ACTIONS = ['refund_buyer', 'release_to_vendor', 'escalate'];
 
+    public function __construct(private readonly RefundService $refundService) {}
+
     public function execute(Dispute $dispute, string $action, User $admin, ?string $note = null): Dispute
     {
-        if (!in_array($action, self::ACTIONS, true)) {
+        if (! in_array($action, self::ACTIONS, true)) {
             throw ValidationException::withMessages([
                 'action' => ['Invalid resolution action.'],
             ]);
@@ -47,6 +50,10 @@ class ResolveDisputeAction
 
         if ($order && $order->status !== 'cancelled') {
             $order->update(['status' => 'cancelled']);
+        }
+
+        if ($order) {
+            $this->refundService->refundOrder($order->load('user'), $dispute);
         }
     }
 

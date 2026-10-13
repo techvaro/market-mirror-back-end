@@ -11,6 +11,7 @@ class MarketResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'state_id' => $this->state_id,
             'name' => $this->name,
             'description' => $this->description,
             'location' => $this->location,
@@ -21,6 +22,7 @@ class MarketResource extends JsonResource
             'shop_count' => $this->shop_count,
             'category' => $this->category,
             'banner_gradient' => $this->banner_gradient,
+            'is_active' => $this->is_active,
             'created_at' => $this->created_at,
         ];
     }

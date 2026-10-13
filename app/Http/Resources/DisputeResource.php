@@ -14,6 +14,20 @@ class DisputeResource extends JsonResource
             'user_id' => $this->user_id,
             'order_id' => $this->order_id,
             'order' => OrderResource::make($this->whenLoaded('order')),
+            'vendors' => $this->when($this->relationLoaded('order'), function () {
+                return $this->order->items
+                    ->map(fn ($item) => $item->product?->shop)
+                    ->filter()
+                    ->unique('id')
+                    ->map(fn ($shop) => [
+                        'id' => $shop->user?->id,
+                        'shop_id' => $shop->id,
+                        'shop_name' => $shop->name,
+                        'name' => $shop->user?->name,
+                        'email' => $shop->user?->email,
+                        'phone' => $shop->user?->phone,
+                    ])->values();
+            }),
             'reason' => $this->reason,
             'description' => $this->description,
             'status' => $this->status,

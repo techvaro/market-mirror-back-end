@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Support\MarketContext;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class ProductService
 {
@@ -11,10 +13,14 @@ class ProductService
         private readonly MarketContext $marketContext
     ) {}
 
-    public function list(array $filters, int $perPage = 15)
+    public function list(array $filters, int $perPage = 15, bool $includeUnpublished = false)
     {
-        $query = Product::with(['shop', 'variants'])
+        $query = Product::with(['shop', 'variants', 'images'])
             ->forMarket($this->marketContext->get());
+
+        if (! $includeUnpublished) {
+            $query->where('stock', true);
+        }
 
         if (isset($filters['shop_id'])) {
             $query->where('shop_id', $filters['shop_id']);
@@ -26,7 +32,7 @@ class ProductService
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
         if (isset($filters['min_price'])) {
@@ -50,11 +56,13 @@ class ProductService
         return $query->paginate($perPage);
     }
 
-    public function find(int $id): Product
+    public function find(int $id, bool $includeUnpublished = false): Product
     {
-        return Product::with(['shop', 'variants'])
+        $query = Product::with(['shop', 'variants', 'images'])
             ->forMarket($this->marketContext->get())
-            ->findOrFail($id);
+            ->when(! $includeUnpublished, fn (Builder $query) => $query->where('stock', true));
+
+        return $query->findOrFail($id);
     }
 
     /**
@@ -63,25 +71,36 @@ class ProductService
      */
     public function findForOwner(int $id): Product
     {
-        return Product::with(['shop', 'variants'])->findOrFail($id);
+        return Product::with(['shop', 'variants', 'images'])->findOrFail($id);
     }
 
     public function create(array $data): Product
     {
+        $data['sku'] ??= $this->generateSku();
         $product = Product::create($data);
 
         if ($product->shop) {
             $product->shop->increment('product_count');
         }
 
-        return $product->load(['shop', 'variants']);
+        return $product->load(['shop', 'variants', 'images']);
+    }
+
+    private function generateSku(): string
+    {
+        do {
+            $sku = 'MM-SKU-'.strtoupper(Str::random(10));
+        } while (Product::where('sku', $sku)->exists());
+
+        return $sku;
     }
 
     public function update(int $id, array $data): Product
     {
         $product = Product::findOrFail($id);
         $product->update($data);
-        return $product->load(['shop', 'variants']);
+
+        return $product->load(['shop', 'variants', 'images']);
     }
 
     public function delete(int $id): void

@@ -7,7 +7,6 @@ use App\Http\Requests\Api\ReplyReviewRequest;
 use App\Http\Requests\Api\StoreReviewRequest;
 use App\Http\Requests\Api\UploadReviewImageRequest;
 use App\Http\Resources\ReviewResource;
-use App\Models\Review;
 use App\Models\ReviewImage;
 use App\Services\ReviewService;
 use App\Services\UploadService;

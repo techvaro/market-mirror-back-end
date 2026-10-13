@@ -14,7 +14,7 @@ class ShopService
 
     public function list(array $filters, int $perPage = 15)
     {
-        $query = Shop::with(['user', 'products', 'reviews', 'services', 'shopImages'])
+        $query = Shop::with(['user', 'products' => fn ($query) => $query->where('stock', true), 'reviews', 'services', 'shopImages'])
             ->forMarket($this->marketContext->get());
 
         if (isset($filters['market'])) {
@@ -33,8 +33,8 @@ class ShopService
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%")
-                  ->orWhere('market', 'like', "%{$search}%");
+                    ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhere('market', 'like', "%{$search}%");
             });
         }
         if (isset($filters['lat'], $filters['lng'], $filters['radius'])) {
@@ -46,7 +46,7 @@ class ShopService
 
     public function find(int $id): Shop
     {
-        return Shop::with(['user', 'products', 'reviews', 'services', 'shopImages'])
+        return Shop::with(['user', 'products' => fn ($query) => $query->where('stock', true), 'reviews', 'services', 'shopImages'])
             ->forMarket($this->marketContext->get())
             ->findOrFail($id);
     }
@@ -86,6 +86,7 @@ class ShopService
         $data['market_id'] = $marketId ?? $shop->market_id;
 
         $shop->update($data);
+
         return $shop->load('user', 'market');
     }
 
@@ -128,6 +129,7 @@ class ShopService
     public function reviews(int $shopId, int $perPage = 15)
     {
         $shop = Shop::findOrFail($shopId);
+
         return $shop->reviews()->with(['user', 'reviewImages'])->latest()->paginate($perPage);
     }
 }

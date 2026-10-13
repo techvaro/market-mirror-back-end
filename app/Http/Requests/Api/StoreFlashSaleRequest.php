@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\FlashSale;
 use Illuminate\Support\Facades\Gate;
 
 class StoreFlashSaleRequest extends ApiFormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('create', \App\Models\FlashSale::class);
+        return Gate::allows('create', FlashSale::class);
     }
 
     public function rules(): array

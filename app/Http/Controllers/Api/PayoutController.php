@@ -5,19 +5,24 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StorePayoutRequest;
 use App\Http\Requests\Api\UpdatePayoutBankDetailsRequest;
+use App\Http\Requests\Api\VerifyBankAccountRequest;
 use App\Http\Resources\PayoutResource;
+use App\Models\Payout;
+use App\Services\FlutterwaveService;
 use App\Services\PayoutService;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class PayoutController extends Controller
 {
     public function __construct(
-        private readonly PayoutService $payoutService
+        private readonly PayoutService $payoutService,
+        private readonly FlutterwaveService $flutterwave
     ) {}
 
     public function index(Request $request)
     {
-        $this->authorize('viewAny', \App\Models\Payout::class);
+        $this->authorize('viewAny', Payout::class);
 
         $payouts = $this->payoutService->list(
             $request->user()->id,
@@ -27,17 +32,42 @@ class PayoutController extends Controller
         return $this->paginated(PayoutResource::collection($payouts), $payouts);
     }
 
-    public function store(StorePayoutRequest $request)
+    public function summary(Request $request)
     {
-        $this->authorize('create', \App\Models\Payout::class);
+        $this->authorize('viewAny', Payout::class);
 
         return response()->json([
             'success' => true,
-            'data' => new PayoutResource(
-                $this->payoutService->create($request->sanitized(), $request->user())
-            ),
-            'message' => 'Payout request submitted',
-        ], 201);
+            'data' => $this->payoutService->summary($request->user()),
+        ]);
+    }
+
+    public function banks(Request $request)
+    {
+        $this->authorize('manageBankDetails', Payout::class);
+
+        try {
+            return response()->json(['success' => true, 'data' => $this->flutterwave->nigerianBanks()]);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 503);
+        }
+    }
+
+    public function store(StorePayoutRequest $request)
+    {
+        $this->authorize('create', Payout::class);
+
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => new PayoutResource(
+                    $this->payoutService->create($request->sanitized(), $request->user())
+                ),
+                'message' => 'Payout request submitted',
+            ], 201);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
     }
 
     public function show(Request $request, $id)
@@ -51,9 +81,24 @@ class PayoutController extends Controller
         ]);
     }
 
+    public function approve(Request $request, $id)
+    {
+        $this->authorize('approve', Payout::class);
+
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => new PayoutResource($this->payoutService->approve((int) $id)),
+                'message' => 'Payout approved and submitted for transfer',
+            ]);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+    }
+
     public function bankDetails(Request $request)
     {
-        $this->authorize('manageBankDetails', \App\Models\Payout::class);
+        $this->authorize('manageBankDetails', Payout::class);
 
         $user = $request->user();
 
@@ -61,6 +106,7 @@ class PayoutController extends Controller
             'success' => true,
             'data' => [
                 'bank_name' => $user->bank_name,
+                'bank_code' => $user->bank_code,
                 'bank_account_name' => $user->bank_account_name,
                 'bank_account_number' => $user->bank_account_number,
             ],
@@ -69,9 +115,13 @@ class PayoutController extends Controller
 
     public function updateBankDetails(UpdatePayoutBankDetailsRequest $request)
     {
-        $this->authorize('manageBankDetails', \App\Models\Payout::class);
+        $this->authorize('manageBankDetails', Payout::class);
 
-        $user = $this->payoutService->updateBankDetails($request->user()->id, $request->sanitized());
+        try {
+            $user = $this->payoutService->updateBankDetails($request->user()->id, $request->sanitized());
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 503);
+        }
 
         return response()->json([
             'success' => true,
@@ -84,25 +134,33 @@ class PayoutController extends Controller
         ]);
     }
 
-    public function verifyBankAccount(Request $request)
+    public function verifyBankAccount(VerifyBankAccountRequest $request)
     {
-        $this->authorize('manageBankDetails', \App\Models\Payout::class);
+        $this->authorize('manageBankDetails', Payout::class);
 
-        $request->validate([
-            'bank_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:50',
-        ]);
+        try {
+            $supportedBank = collect($this->flutterwave->nigerianBanks())->first(
+                fn (array $bank): bool => $bank['code'] === $request->validated('bank_code')
+            );
+            if (! $supportedBank) {
+                return response()->json(['message' => 'Select a supported Nigerian bank.'], 422);
+            }
 
-        $user = $request->user();
-
-        $accountName = $user->name;
+            $accountName = app(FlutterwaveService::class)->resolveBankAccount(
+                $request->validated('bank_code'),
+                $request->validated('account_number')
+            );
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
 
         return response()->json([
             'success' => true,
             'data' => [
                 'account_name' => $accountName,
-                'account_number' => $request->account_number,
-                'bank_name' => $request->bank_name,
+                'account_number' => $request->validated('account_number'),
+                'bank_name' => $supportedBank['name'],
+                'bank_code' => $request->validated('bank_code'),
                 'verified' => true,
             ],
             'message' => 'Bank account verified successfully',

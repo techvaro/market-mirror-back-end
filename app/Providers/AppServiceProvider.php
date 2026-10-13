@@ -2,27 +2,55 @@
 
 namespace App\Providers;
 
-use App\Services\AuthService;
-use App\Services\UserService;
-use App\Services\MapperService;
-use App\Services\TaskService;
-use App\Services\ShopService;
-use App\Services\ProductService;
-use App\Services\OrderService;
-use App\Services\ReviewService;
+use App\Models\Coupon;
+use App\Models\Dispute;
+use App\Models\FlashSale;
+use App\Models\Mapper;
+use App\Models\Order;
+use App\Models\Payout;
+use App\Models\Product;
+use App\Models\Review;
+use App\Models\Shop;
+use App\Models\ShopLocation;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\VendorApplication;
+use App\Models\VendorRegistration;
+use App\Models\VerificationQueue;
+use App\Policies\AdminResourcePolicy;
+use App\Policies\CouponPolicy;
+use App\Policies\DisputePolicy;
+use App\Policies\FlashSalePolicy;
+use App\Policies\OrderPolicy;
+use App\Policies\PayoutPolicy;
+use App\Policies\ProductPolicy;
+use App\Policies\ReviewPolicy;
+use App\Policies\ShopLocationPolicy;
+use App\Policies\ShopPolicy;
+use App\Policies\TaskPolicy;
+use App\Policies\VendorApplicationPolicy;
+use App\Policies\VendorRegistrationPolicy;
 use App\Services\AdminDashboardService;
-use App\Services\SearchService;
-use App\Services\MessageService;
+use App\Services\AuthService;
+use App\Services\BuildingService;
+use App\Services\CategoryService;
 use App\Services\DisputeService;
+use App\Services\MapperService;
+use App\Services\MarketService;
+use App\Services\MessageService;
+use App\Services\NotificationService;
+use App\Services\OrderService;
 use App\Services\PaymentService;
+use App\Services\ProductService;
+use App\Services\ReviewService;
+use App\Services\SearchService;
+use App\Services\ShopLocationService;
+use App\Services\ShopService;
+use App\Services\TaskService;
+use App\Services\UserService;
 use App\Services\VendorApplicationService;
 use App\Services\VendorRegistrationService;
 use App\Services\VerificationQueueService;
-use App\Services\NotificationService;
-use App\Services\ShopLocationService;
-use App\Services\BuildingService;
-use App\Services\CategoryService;
-use App\Services\MarketService;
 use App\Support\MarketContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -34,7 +62,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(MarketContext::class, fn () => new MarketContext());
+        $this->app->singleton(MarketContext::class, fn () => new MarketContext);
 
         $this->app->singleton(AuthService::class);
         $this->app->singleton(UserService::class);
@@ -65,26 +93,31 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
-        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
 
         RateLimiter::for('password_reset', fn (Request $request) => Limit::perMinute(3)->by($request->ip()));
 
-        Gate::policy(\App\Models\Product::class, \App\Policies\ProductPolicy::class);
-        Gate::policy(\App\Models\Shop::class, \App\Policies\ShopPolicy::class);
-        Gate::policy(\App\Models\Order::class, \App\Policies\OrderPolicy::class);
-        Gate::policy(\App\Models\Dispute::class, \App\Policies\DisputePolicy::class);
-        Gate::policy(\App\Models\Review::class, \App\Policies\ReviewPolicy::class);
-        Gate::policy(\App\Models\Task::class, \App\Policies\TaskPolicy::class);
-        Gate::policy(\App\Models\ShopLocation::class, \App\Policies\ShopLocationPolicy::class);
-        Gate::policy(\App\Models\VendorApplication::class, \App\Policies\VendorApplicationPolicy::class);
-        Gate::policy(\App\Models\VendorRegistration::class, \App\Policies\VendorRegistrationPolicy::class);
-        Gate::policy(\App\Models\Coupon::class, \App\Policies\CouponPolicy::class);
-        Gate::policy(\App\Models\FlashSale::class, \App\Policies\FlashSalePolicy::class);
-        Gate::policy(\App\Models\Payout::class, \App\Policies\PayoutPolicy::class);
-        Gate::policy(\App\Models\Mapper::class, \App\Policies\AdminResourcePolicy::class);
-        Gate::policy(\App\Models\VerificationQueue::class, \App\Policies\AdminResourcePolicy::class);
-        Gate::policy(\App\Models\User::class, \App\Policies\AdminResourcePolicy::class);
+        RateLimiter::for('payments', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
 
-        Gate::define('access-analytics', fn (\App\Models\User $user) => in_array($user->role, ['admin', 'vendor']));
+        // Flutterwave webhooks are machine-to-machine and keyed by source IP.
+        RateLimiter::for('webhooks', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
+
+        Gate::policy(Product::class, ProductPolicy::class);
+        Gate::policy(Shop::class, ShopPolicy::class);
+        Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(Dispute::class, DisputePolicy::class);
+        Gate::policy(Review::class, ReviewPolicy::class);
+        Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(ShopLocation::class, ShopLocationPolicy::class);
+        Gate::policy(VendorApplication::class, VendorApplicationPolicy::class);
+        Gate::policy(VendorRegistration::class, VendorRegistrationPolicy::class);
+        Gate::policy(Coupon::class, CouponPolicy::class);
+        Gate::policy(FlashSale::class, FlashSalePolicy::class);
+        Gate::policy(Payout::class, PayoutPolicy::class);
+        Gate::policy(Mapper::class, AdminResourcePolicy::class);
+        Gate::policy(VerificationQueue::class, AdminResourcePolicy::class);
+        Gate::policy(User::class, AdminResourcePolicy::class);
+
+        Gate::define('access-analytics', fn (User $user) => in_array($user->role, ['admin', 'vendor']));
     }
 }

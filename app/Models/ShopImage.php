@@ -13,6 +13,7 @@ class ShopImage extends Model
     protected $fillable = [
         'shop_id',
         'image_url',
+        'image_type',
         'sort_order',
     ];
 

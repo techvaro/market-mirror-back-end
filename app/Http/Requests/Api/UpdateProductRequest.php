@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api;
 
 use App\Models\Product;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends ApiFormRequest
 {
@@ -16,6 +17,7 @@ class UpdateProductRequest extends ApiFormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:255'],
+            'sku' => ['sometimes', 'nullable', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($this->route('id'))],
             'description' => ['sometimes', 'nullable', 'string'],
             'category' => ['sometimes', 'string', 'max:100'],
             'price' => ['sometimes', 'numeric', 'min:0'],

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\StorePaymentRequest;
 use App\Http\Resources\PaymentResource;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
@@ -24,16 +23,5 @@ class PaymentController extends Controller
         );
 
         return $this->paginated(PaymentResource::collection($payments), $payments);
-    }
-
-    public function store(StorePaymentRequest $request)
-    {
-        return response()->json([
-            'success' => true,
-            'data' => new PaymentResource(
-                $this->paymentService->create($request->sanitized(), $request->user()->id)
-            ),
-            'message' => 'Payment recorded',
-        ], 201);
     }
 }

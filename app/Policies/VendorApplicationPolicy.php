@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\VendorApplication;
 use App\Models\User;
+use App\Models\VendorApplication;
 
 class VendorApplicationPolicy
 {

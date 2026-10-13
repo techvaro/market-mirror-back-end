@@ -26,7 +26,7 @@ class SetMarketContext
             ?? $request->input('market_id');
 
         if ($marketId !== null && $marketId !== '') {
-            if (!Market::whereKey($marketId)->exists()) {
+            if (! Market::whereKey($marketId)->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'The selected market does not exist.',

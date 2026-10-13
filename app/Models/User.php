@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Models\Market;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+
 class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable;
@@ -17,6 +17,7 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'google_id',
         'role',
         'status',
         'phone',
@@ -27,20 +28,28 @@ class User extends Authenticatable implements JWTSubject
         'region',
         'active_market_id',
         'bank_name',
+        'bank_code',
         'bank_account_name',
         'bank_account_number',
+        'email_verification_code',
+        'email_verification_expires_at',
+        'email_verified_at',
+        'must_change_password',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'email_verification_code',
     ];
 
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_verification_expires_at' => 'datetime',
             'password' => 'hashed',
+            'must_change_password' => 'boolean',
         ];
     }
 
@@ -100,6 +109,11 @@ class User extends Authenticatable implements JWTSubject
     public function vendorApplications(): HasMany
     {
         return $this->hasMany(VendorApplication::class);
+    }
+
+    public function vendorApplication(): HasOne
+    {
+        return $this->hasOne(VendorApplication::class)->latestOfMany();
     }
 
     public function chatConversations(): HasMany

@@ -17,6 +17,7 @@ class CreateMapperRequest extends ApiFormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'employee_id' => ['required', 'string', 'unique:mappers,employee_id'],
             'assigned_market' => ['required', 'string', 'max:255'],

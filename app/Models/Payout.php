@@ -17,14 +17,18 @@ class Payout extends Model
         'account_name',
         'account_number',
         'bank_name',
+        'bank_code',
         'status',
         'note',
+        'transfer_reference',
+        'provider_response',
     ];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
+            'provider_response' => 'array',
         ];
     }
 

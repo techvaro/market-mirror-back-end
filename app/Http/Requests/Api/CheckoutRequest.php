@@ -9,7 +9,7 @@ class CheckoutRequest extends ApiFormRequest
         return [
             'shop_id' => ['nullable', 'integer', 'exists:shops,id'],
             'delivery_method' => ['required', 'string', 'in:delivery,pickup'],
-            'payment_method' => ['sometimes', 'string', 'in:paystack,card,bank_transfer,cod'],
+            'payment_method' => ['sometimes', 'string', 'in:flutterwave,paystack,card,bank_transfer,cod'],
             'address_first_name' => ['nullable', 'string', 'max:255'],
             'address_last_name' => ['nullable', 'string', 'max:255'],
             'address_phone' => ['nullable', 'string', 'max:50'],

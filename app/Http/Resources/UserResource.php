@@ -16,6 +16,7 @@ class UserResource extends JsonResource
             'phone' => $this->phone,
             'role' => $this->role,
             'status' => $this->status,
+            'must_change_password' => (bool) $this->must_change_password,
             'location' => $this->location,
             'avatar_url' => $this->avatar_url,
             'profile_image_url' => $this->profile_image_url,
@@ -27,6 +28,7 @@ class UserResource extends JsonResource
             'updated_at' => $this->updated_at,
             'shops' => ShopResource::collection($this->whenLoaded('shops')),
             'mapper_profile' => MapperResource::make($this->whenLoaded('mapperProfile')),
+            'vendor_application' => VendorApplicationResource::make($this->whenLoaded('vendorApplication')),
         ];
     }
 }

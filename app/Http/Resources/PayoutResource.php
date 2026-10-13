@@ -17,7 +17,9 @@ class PayoutResource extends JsonResource
             'account_name' => $this->account_name,
             'account_number' => $this->account_number,
             'bank_name' => $this->bank_name,
+            'bank_code' => $this->bank_code,
             'status' => $this->status,
+            'transfer_reference' => $this->transfer_reference,
             'note' => $this->note,
             'created_at' => $this->created_at,
         ];

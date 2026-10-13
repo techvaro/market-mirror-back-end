@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Task;
 use App\Models\Mapper;
+use App\Models\Notification;
+use App\Models\Task;
 
 class TaskService
 {
@@ -33,16 +34,30 @@ class TaskService
 
     public function find(int $id): Task
     {
-        return Task::with(['mapper.user', 'vendor'])->findOrFail($id);
+        return Task::with('mapper.user')->findOrFail($id);
     }
 
     public function create(array $data): Task
     {
-        return Task::create([
+        $task = Task::create([
             ...$data,
             'assigned_at' => now(),
             'status' => 'pending',
         ]);
+
+        $mapper = Mapper::find($task->mapper_id);
+        if ($mapper) {
+            Notification::create([
+                'user_id' => $mapper->user_id,
+                'type' => 'assignment',
+                'title' => 'New Task Assigned',
+                'message' => "You have been assigned a new task: \"{$task->title}\" in {$task->market}."
+                    .($task->due_date ? ' Due '.$task->due_date->format('M j, Y').'.' : ''),
+                'link' => "/tasks/{$task->id}",
+            ]);
+        }
+
+        return $task;
     }
 
     public function update(int $id, array $data): Task
@@ -54,7 +69,7 @@ class TaskService
             unset($data['status']);
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $task->update($data);
         }
 
@@ -80,7 +95,9 @@ class TaskService
     private function updateMapperCounters(int $mapperId, string $transition): void
     {
         $mapper = Mapper::find($mapperId);
-        if (!$mapper) return;
+        if (! $mapper) {
+            return;
+        }
 
         match ($transition) {
             'completed' => [

@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\Coupon;
 use Illuminate\Support\Facades\Gate;
 
 class StoreCouponRequest extends ApiFormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('create', \App\Models\Coupon::class);
+        return Gate::allows('create', Coupon::class);
     }
 
     public function rules(): array

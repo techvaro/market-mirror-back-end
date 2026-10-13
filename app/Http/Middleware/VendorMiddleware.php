@@ -11,7 +11,7 @@ class VendorMiddleware
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'vendor') {
+        if (! $user || $user->role !== 'vendor') {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. Vendor access required.',

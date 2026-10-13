@@ -14,6 +14,7 @@ use App\Models\ShopImage;
 use App\Services\ShopService;
 use App\Services\UploadService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ShopController extends Controller
 {
@@ -91,12 +92,30 @@ class ShopController extends Controller
 
         $this->authorize('update', $shop);
 
+        $imageType = $request->validated('image_type');
+        $sortOrder = $request->validated('sort_order') ?? 0;
+        $existingImageQuery = $shop->shopImages()->where('image_type', $imageType);
+        if ($imageType === 'gallery') {
+            $existingImageQuery->where('sort_order', $sortOrder);
+            if (! $existingImageQuery->exists() && $shop->shopImages()->where('image_type', 'gallery')->count() >= 4) {
+                throw ValidationException::withMessages([
+                    'image' => ['You can upload a maximum of four shop photos.'],
+                ]);
+            }
+        }
+        $existingImage = $existingImageQuery->first();
+        if ($existingImage) {
+            $this->uploadService->deleteByUrl($existingImage->image_url);
+            $existingImage->delete();
+        }
+
         $url = $this->uploadService->store($request->file('image'), 'shops');
 
         $image = ShopImage::create([
             'shop_id' => $shop->id,
             'image_url' => $url,
-            'sort_order' => $request->validated('sort_order') ?? 0,
+            'image_type' => $imageType,
+            'sort_order' => $sortOrder,
         ]);
 
         return response()->json([

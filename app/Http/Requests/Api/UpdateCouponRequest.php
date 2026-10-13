@@ -15,7 +15,7 @@ class UpdateCouponRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            'code' => ['sometimes', 'string', 'max:255', 'unique:coupons,code,' . $this->route('id')],
+            'code' => ['sometimes', 'string', 'max:255', 'unique:coupons,code,'.$this->route('id')],
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'discount_type' => ['sometimes', 'string', 'in:percentage,fixed'],

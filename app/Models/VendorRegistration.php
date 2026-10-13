@@ -12,12 +12,19 @@ class VendorRegistration extends Model
 
     protected $fillable = [
         'vendor_name',
+        'owner_name',
+        'phone',
+        'email',
         'business_category',
         'market',
+        'shop_number',
         'mapper_id',
         'mapper_name',
         'current_status',
         'approval_status',
+        'review_notes',
+        'reviewed_at',
+        'reviewed_by',
         'photos',
         'latitude',
         'longitude',
@@ -30,6 +37,7 @@ class VendorRegistration extends Model
             'photos' => 'array',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
+            'reviewed_at' => 'datetime',
         ];
     }
 

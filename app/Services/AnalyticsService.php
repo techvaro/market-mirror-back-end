@@ -3,11 +3,9 @@
 namespace App\Services;
 
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Shop;
-use App\Models\User;
 use Carbon\Carbon;
 
 class AnalyticsService
@@ -16,7 +14,7 @@ class AnalyticsService
     {
         $shop = Shop::where('user_id', $userId)->first();
 
-        if (!$shop) {
+        if (! $shop) {
             return $this->emptyVendorStats();
         }
 
@@ -85,7 +83,9 @@ class AnalyticsService
     public function vendorSales(int $userId): array
     {
         $shop = Shop::where('user_id', $userId)->first();
-        if (!$shop) return [];
+        if (! $shop) {
+            return [];
+        }
 
         $data = [];
         for ($i = 29; $i >= 0; $i--) {

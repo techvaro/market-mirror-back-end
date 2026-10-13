@@ -13,11 +13,15 @@ class VendorApplication extends Model
     protected $fillable = [
         'user_id',
         'shop_name',
+        'building_name',
+        'shop_number',
+        'shop_address',
         'owner_name',
         'phone',
         'category',
         'market',
         'description',
+        'id_document_path',
         'status',
     ];
 

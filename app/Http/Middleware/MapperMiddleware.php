@@ -11,7 +11,7 @@ class MapperMiddleware
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'mapper') {
+        if (! $user || $user->role !== 'mapper') {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. Mapper access required.',

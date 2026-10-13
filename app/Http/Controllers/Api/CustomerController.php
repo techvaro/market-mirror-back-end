@@ -13,7 +13,7 @@ class CustomerController extends Controller
     {
         $shop = Shop::where('user_id', $request->user()->id)->first();
 
-        if (!$shop) {
+        if (! $shop) {
             return response()->json([
                 'success' => true,
                 'data' => [],
@@ -21,8 +21,8 @@ class CustomerController extends Controller
         }
 
         $customers = Order::whereHas('items', function ($q) use ($shop) {
-                $q->where('shop_name', $shop->name);
-            })
+            $q->where('shop_name', $shop->name);
+        })
             ->with('user')
             ->selectRaw('user_id, COUNT(*) as orders_count, SUM(total) as total_spent, MAX(created_at) as last_order')
             ->groupBy('user_id')
@@ -30,6 +30,7 @@ class CustomerController extends Controller
 
         $data = $customers->map(function ($order) {
             $user = $order->user;
+
             return [
                 'id' => (string) $user->id,
                 'name' => $user->name,

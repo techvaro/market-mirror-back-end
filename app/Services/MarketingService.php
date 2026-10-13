@@ -27,6 +27,7 @@ class MarketingService
     {
         $coupon = Coupon::findOrFail($id);
         $coupon->update($data);
+
         return $coupon;
     }
 
@@ -56,6 +57,7 @@ class MarketingService
     {
         $sale = FlashSale::findOrFail($id);
         $sale->update($data);
+
         return $sale;
     }
 

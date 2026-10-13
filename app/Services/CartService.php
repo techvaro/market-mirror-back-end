@@ -24,6 +24,7 @@ class CartService
 
         if ($existing) {
             $existing->increment('quantity', $data['quantity'] ?? 1);
+
             return $existing->fresh()->load('product.shop');
         }
 
@@ -41,6 +42,7 @@ class CartService
             ->firstOrFail();
 
         $item->update(['quantity' => $data['quantity']]);
+
         return $item->fresh()->load('product.shop');
     }
 

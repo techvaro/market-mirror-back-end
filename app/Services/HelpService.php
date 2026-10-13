@@ -28,11 +28,12 @@ class HelpService
     {
         $ticket = HelpTicket::findOrFail($id);
         $ticket->update($data);
+
         return $ticket;
     }
 
     // ─── FAQs ─────────────────────────────────────────────────────
-    public function listFaqs(string $category = null)
+    public function listFaqs(?string $category = null)
     {
         $query = Faq::where('is_active', true)->orderBy('sort_order');
 

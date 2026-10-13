@@ -18,4 +18,12 @@ class DashboardController extends Controller
             'data' => $this->dashboardService->getStats(),
         ]);
     }
+
+    public function analytics()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->dashboardService->getAnalytics(),
+        ]);
+    }
 }

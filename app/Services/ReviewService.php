@@ -20,6 +20,9 @@ class ReviewService
 
     public function create(array $data, int $userId, string $userName): Review
     {
+        // Frontends use `comment`; the column stores `text`.
+        $data['text'] = $data['text'] ?? $data['comment'] ?? '';
+
         $review = Review::create([
             ...$data,
             'user_id' => $userId,
@@ -40,6 +43,7 @@ class ReviewService
     {
         $review = Review::findOrFail($id);
         $review->update(['reply' => $reply]);
+
         return $review;
     }
 
@@ -51,7 +55,9 @@ class ReviewService
     private function recalculateShopRating(int $shopId): void
     {
         $shop = Shop::find($shopId);
-        if (!$shop) return;
+        if (! $shop) {
+            return;
+        }
 
         $avgRating = $shop->reviews()->avg('rating');
         $shop->update([

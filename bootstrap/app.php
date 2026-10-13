@@ -1,8 +1,15 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\MapperMiddleware;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SetMarketContext;
+use App\Http\Middleware\VendorMiddleware;
+use App\Http\Middleware\VerifyFlutterwaveWebhook;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -14,11 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'mapper' => \App\Http\Middleware\MapperMiddleware::class,
-            'vendor' => \App\Http\Middleware\VendorMiddleware::class,
-            'market' => \App\Http\Middleware\SetMarketContext::class,
+            'role' => RoleMiddleware::class,
+            'admin' => AdminMiddleware::class,
+            'mapper' => MapperMiddleware::class,
+            'vendor' => VendorMiddleware::class,
+            'market' => SetMarketContext::class,
+            'flutterwave.webhook' => VerifyFlutterwaveWebhook::class,
         ]);
 
         $middleware->redirectGuestsTo(function ($request) {
@@ -31,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->statefulApi();
         $middleware->api(prepend: [
-            \Illuminate\Http\Middleware\HandleCors::class,
+            HandleCors::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

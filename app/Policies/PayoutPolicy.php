@@ -24,6 +24,11 @@ class PayoutPolicy
 
     public function manageBankDetails(User $user): bool
     {
-        return in_array($user->role, ['vendor', 'admin']);
+        return in_array($user->role, ['buyer', 'vendor', 'admin']);
+    }
+
+    public function approve(User $user): bool
+    {
+        return $user->role === 'admin';
     }
 }

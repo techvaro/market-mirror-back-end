@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Shop;
 
 class PaymentService
 {
@@ -10,7 +12,16 @@ class PaymentService
     {
         $query = Payment::with(['user', 'order']);
 
-        if ($userRole !== 'admin' && $userId) {
+        if ($userRole === 'vendor' && $userId) {
+            $shopNames = Shop::where('user_id', $userId)->pluck('name');
+
+            if ($shopNames->isEmpty()) {
+                return Payment::with(['user', 'order'])->whereRaw('1 = 0')->paginate($perPage);
+            }
+
+            $orderIds = OrderItem::whereIn('shop_name', $shopNames)->pluck('order_id');
+            $query->whereIn('order_id', $orderIds);
+        } elseif ($userRole !== 'admin' && $userId) {
             $query->where('user_id', $userId);
         }
 
@@ -19,10 +30,6 @@ class PaymentService
 
     public function create(array $data, int $userId): Payment
     {
-        return Payment::create([
-            ...$data,
-            'user_id' => $userId,
-            'status' => 'completed',
-        ]);
+        throw new \RuntimeException('Payments must be initialized through Flutterwave.');
     }
 }

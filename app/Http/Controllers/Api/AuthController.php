@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\BuyerRegisterRequest;
+use App\Http\Requests\Api\ChangePasswordRequest;
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Requests\Api\RegisterRequest;
 use App\Http\Requests\Api\UpdateProfileRequest;
 use App\Http\Requests\Api\UploadAvatarRequest;
+use App\Http\Requests\Api\VendorRegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use App\Services\UploadService;
@@ -19,21 +22,64 @@ class AuthController extends Controller
         private readonly UploadService $uploadService
     ) {}
 
-    public function register(RegisterRequest $request)
+    public function registerBuyer(BuyerRegisterRequest $request)
     {
-        $data = $this->authService->register($request->sanitized());
+        $data = $request->sanitized();
+        $data['role'] = 'buyer';
+
+        $result = $this->authService->register($data);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'user' => new UserResource($data['user']->load('shops')),
-                'token' => $data['token'],
-                'token_type' => $data['token_type'],
-                'expires_in' => $data['expires_in'],
-                'refresh_token' => $data['refresh_token'],
-                'refresh_token_expires_in' => $data['refresh_token_expires_in'],
+                'user' => new UserResource($result['user']->load('shops')),
+                'token' => $result['token'],
+                'token_type' => $result['token_type'],
+                'expires_in' => $result['expires_in'],
+                'refresh_token' => $result['refresh_token'],
+                'refresh_token_expires_in' => $result['refresh_token_expires_in'],
             ],
-            'message' => 'Registration successful',
+            'message' => 'Buyer registration successful',
+        ], 201);
+    }
+
+    public function register(RegisterRequest $request)
+    {
+        $data = $request->sanitized();
+        $result = $this->authService->register($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => new UserResource($result['user']->load('shops')),
+                'token' => $result['token'],
+                'token_type' => $result['token_type'],
+                'expires_in' => $result['expires_in'],
+                'refresh_token' => $result['refresh_token'],
+                'refresh_token_expires_in' => $result['refresh_token_expires_in'],
+            ],
+            'message' => 'Registration successful. Check your email for the verification code.',
+        ], 201);
+    }
+
+    public function registerVendor(VendorRegisterRequest $request)
+    {
+        $data = $request->sanitized();
+        $data['role'] = 'vendor';
+
+        $result = $this->authService->register($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => new UserResource($result['user']->load('shops')),
+                'token' => $result['token'],
+                'token_type' => $result['token_type'],
+                'expires_in' => $result['expires_in'],
+                'refresh_token' => $result['refresh_token'],
+                'refresh_token_expires_in' => $result['refresh_token_expires_in'],
+            ],
+            'message' => 'Vendor registration successful. Your account is pending admin approval.',
         ], 201);
     }
 
@@ -103,6 +149,20 @@ class AuthController extends Controller
             'success' => true,
             'data' => new UserResource($user),
             'message' => 'Profile updated',
+        ]);
+    }
+
+    public function changePassword(ChangePasswordRequest $request)
+    {
+        $this->authService->changePassword(
+            $request->user(),
+            $request->current_password,
+            $request->password,
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully.',
         ]);
     }
 

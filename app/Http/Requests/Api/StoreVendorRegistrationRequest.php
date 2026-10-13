@@ -16,8 +16,12 @@ class StoreVendorRegistrationRequest extends ApiFormRequest
     {
         return [
             'vendor_name' => ['required', 'string', 'max:255'],
+            'owner_name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
             'business_category' => ['required', 'string', 'max:100'],
             'market' => ['required', 'string', 'max:255'],
+            'shop_number' => ['nullable', 'string', 'max:50'],
             'mapper_name' => ['nullable', 'string', 'max:255'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],

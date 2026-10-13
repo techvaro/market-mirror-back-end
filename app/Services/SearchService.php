@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Shop;
 use App\Models\Product;
+use App\Models\Shop;
 use App\Models\VendorApplication;
 use App\Support\MarketContext;
 
@@ -25,19 +25,20 @@ class SearchService
             ->when($lat !== null && $lng !== null && $radius !== null, fn ($q) => $q->nearBy($lat, $lng, $radius))
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('category', 'like', "%{$query}%")
-                  ->orWhere('market', 'like', "%{$query}%")
-                  ->orWhere('city', 'like', "%{$query}%");
+                    ->orWhere('category', 'like', "%{$query}%")
+                    ->orWhere('market', 'like', "%{$query}%")
+                    ->orWhere('city', 'like', "%{$query}%");
             })
             ->limit(10)
             ->get();
 
         $products = Product::forMarket($marketId)
             ->with('shop')
+            ->where('stock', true)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('description', 'like', "%{$query}%")
-                  ->orWhere('category', 'like', "%{$query}%");
+                    ->orWhere('description', 'like', "%{$query}%")
+                    ->orWhere('category', 'like', "%{$query}%");
             })
             ->limit(10)
             ->get();

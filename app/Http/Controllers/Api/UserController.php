@@ -60,4 +60,29 @@ class UserController extends Controller
             'message' => 'User status updated',
         ]);
     }
+
+    public function approveVendor($id)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => new UserResource($this->userService->approveVendor($id)),
+                'message' => 'Vendor approved. An approval email has been sent.',
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function rejectVendor($id)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => new UserResource($this->userService->rejectVendor($id)),
+            'message' => 'Vendor application rejected.',
+        ]);
+    }
 }

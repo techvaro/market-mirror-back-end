@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\Shop;
 use Illuminate\Support\Facades\Gate;
 
 class StoreShopRequest extends ApiFormRequest
 {
     public function authorize(): bool
     {
-        return Gate::allows('create', \App\Models\Shop::class);
+        return Gate::allows('create', Shop::class);
     }
 
     public function rules(): array
