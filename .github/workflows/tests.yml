@@ -1,47 +1,43 @@
-name: Tests
+name: Run Laravel Tests
 
 on:
   push:
-    branches:
-      - master
-      - '*.x'
+    branches: [ main, master ]
   pull_request:
-  schedule:
-    - cron: '0 0 * * *'
-
-permissions:
-  contents: read
+    branches: [ main, master ]
 
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: true
-      matrix:
-        php: [8.3, 8.4, 8.5]
-
-    name: PHP ${{ matrix.php }}
-
     steps:
+      # 1. Checkout your code
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
+      # 2. Setup PHP and necessary extensions
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.3' # Change this if your app uses PHP 8.2, etc.
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
-          coverage: none
+          tools: composer:v2
 
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+      # 3. Copy .env.example to .env
+      - name: Prepare Environment File
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
-      - name: Copy environment file
-        run: cp .env.example .env
+      # 4. Install Composer dependencies
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --ansi
 
-      - name: Generate app key
+      # 5. Generate Laravel Application Key
+      - name: Generate Key
         run: php artisan key:generate
 
-      - name: Execute tests
-        run: php artisan test
+      # 6. Run PHPUnit (it will automatically use your phpunit.xml configuration)
+      - name: Execute Tests
+        run: vendor/bin/phpunit
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
