@@ -24,22 +24,52 @@ class GoogleAuthController extends Controller
         ])->validate();
 
         $request->session()->put('google_role', $role);
+        if ($request->filled('redirect_uri')) {
+            $request->session()->put('google_redirect_uri', $request->query('redirect_uri'));
+        }
+        if ($request->filled('state')) {
+            // allow passing extra state, but keep role
+            $request->session()->put('google_state_extra', $request->query('state'));
+        }
+
+        $state = $role;
+        if ($request->filled('redirect_uri')) {
+            $state = $role.'|'.base64_encode(urlencode($request->query('redirect_uri')));
+        } elseif ($request->session()->has('google_redirect_uri')) {
+            $state = $role.'|'.base64_encode(urlencode($request->session()->get('google_redirect_uri')));
+        }
 
         return Socialite::driver('google')
             ->stateless()
-            ->with(['state' => $role])
+            ->with(['state' => $state])
             ->redirect();
     }
 
     public function callback(Request $request): RedirectResponse
     {
-        $role = $request->query('state', $request->session()->pull('google_role', 'buyer'));
+        $stateParam = $request->query('state');
+        $role = $request->session()->pull('google_role', 'buyer');
+        $customRedirect = $request->session()->pull('google_redirect_uri');
+
+        if (is_string($stateParam) && str_contains($stateParam, '|')) {
+            [$roleFromState, $encodedRedirect] = explode('|', $stateParam, 2);
+            if (in_array($roleFromState, ['buyer', 'vendor'], true)) {
+                $role = $roleFromState;
+            }
+            if ($encodedRedirect) {
+                $customRedirect = urldecode(base64_decode($encodedRedirect));
+            }
+        } elseif (in_array($stateParam, ['buyer', 'vendor'], true)) {
+            $role = $stateParam;
+        }
+
         if (! in_array($role, ['buyer', 'vendor'], true)) {
             $role = 'buyer';
         }
-        $frontend = $role === 'vendor'
+
+        $frontend = $customRedirect ?: ($role === 'vendor'
             ? config('services.google.vendor_frontend')
-            : config('services.google.buyer_frontend');
+            : config('services.google.buyer_frontend'));
 
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
@@ -83,19 +113,38 @@ class GoogleAuthController extends Controller
                 && $user->vendorApplication?->status === 'Rejected';
 
             if ($user->status === 'suspended' && ! $canResubmitVendorApplication) {
-                return redirect()->to($frontend.'/auth/google/success?error=suspended');
+                if (str_starts_with($frontend, 'http://') || str_starts_with($frontend, 'https://')) {
+                    return redirect()->to($frontend.'/auth/google/success?error=suspended');
+                }
+                $sep = str_contains($frontend, '?') ? '&' : '?';
+                return redirect()->to($frontend.$sep.'error=suspended');
             }
 
             $tokens = $this->authService->issueTokens($user);
 
-            return redirect()->to($frontend.'/auth/google/success?'.http_build_query([
+            if (str_starts_with($frontend, 'http://') || str_starts_with($frontend, 'https://')) {
+                return redirect()->to($frontend.'/auth/google/success?'.http_build_query([
+                    'token' => $tokens['token'],
+                    'refresh_token' => $tokens['refresh_token'],
+                ]));
+            }
+
+            $sep = str_contains($frontend, '?') ? '&' : '?';
+            return redirect()->to($frontend.$sep.http_build_query([
                 'token' => $tokens['token'],
                 'refresh_token' => $tokens['refresh_token'],
             ]));
         } catch (\Throwable $exception) {
             report($exception);
 
-            return redirect()->to($frontend.'/auth/google/success?error=oauth_failed');
+            if (isset($frontend) && (str_starts_with($frontend, 'http://') || str_starts_with($frontend, 'https://'))) {
+                return redirect()->to($frontend.'/auth/google/success?error=oauth_failed');
+            } elseif (isset($frontend)) {
+                $sep = str_contains($frontend, '?') ? '&' : '?';
+                return redirect()->to($frontend.$sep.'error=oauth_failed');
+            }
+
+            return redirect()->to(config('app.url').'/auth/google/success?error=oauth_failed');
         }
     }
 }
